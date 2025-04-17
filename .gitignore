@@ -1,3 +1,5 @@
 *.pyc
 *.json
 venv/
+test.py
+__pycache__/

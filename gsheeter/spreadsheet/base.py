@@ -38,26 +38,3 @@ class SpreadsheetBase(Lego, GoogleAPI):
 		}
 		result = self.request(**endpoint_items)
 		return result
-
-
-class SheetBase(SpreadsheetBase):
-
-	def __init__(self, **kwargs):
-		super().__init__(**kwargs)
-
-	@property
-	def values(self) -> np.ndarray:
-		return self.getattr('values')
-
-	def get_column_char(
-			self,
-			column_index: int
-		) -> str:
-			alph = ''
-			while column_index > 0:
-				column_index, remainder = divmod(column_index, 26)
-				alph = chr(65 + remainder) + alph
-				column_index -= 1
-			return alph
-
-	

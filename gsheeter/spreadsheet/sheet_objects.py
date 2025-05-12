@@ -1,49 +1,297 @@
+from .base import SheetBase
 from ..lego.lego import Lego
+from ..lego.bamboo import Bamboo
 import numpy as np, pandas as pd
 from .sheets_enum import IndexType
-from typing import Any, Iterable, Mapping
-from numbers import Number
+from typing import (
+	Tuple, Union, Generator
+)
+from .sheet_types import (
+	DIMENSIONS,
+	DATA_TYPES,
+	ARRAY_TYPES
+)
+from copy import deepcopy
+from icecream import ic
+from .sheet_utils import (
+	ndarray_to_df,
+	get_index_width,
+	get_column_height,
+	get_value_layers,
+	to_ndarray,
+	make_frame_edges
+)
+ic.configureOutput(includeContext=True)
 
 
-class SheetUpdater:
-	y_offset = None
-	x_offset = None
-	data = None
+class Table(SheetBase):
 
-class Table(Lego):
 	def __init__(
 		self,
-		values: np.ndarray,
+		anchor: tuple,
+		outer_height: int,
+		outer_width: int,
+		parent: SheetBase,
 		**kwargs,
 	):
-		kwargs['values'] = values
+		kwargs['anchor'] = anchor
+		kwargs['parent'] = parent
+		kwargs['properties'] = deepcopy(DIMENSIONS)
+		kwargs['properties']['dimensions']['outer_height'] = outer_height
+		kwargs['properties']['dimensions']['outer_width'] = outer_width
 		super().__init__(**kwargs)
+		self._df = None
+		self._layers = None
+		self.set_dims()
 
 	@property
-	def values(self) -> np.ndarray:
-		return self.getattr('values')
+	def spreadsheetId(self) -> str:
+		return self.parent.spreadsheetId
+
+	@property
+	def sheetId(self) -> str:
+		return self.parent.sheetId
+
+	@property
+	def title(self) -> str:
+		return self.parent.title
+
+	@property
+	def x_anchor(self) -> int:
+		return self.getattr('anchor')[1]
+
+	@property
+	def y_anchor(self) -> int:
+		return self.getattr('anchor')[0]
+
+	@property
+	def anchor(self) -> tuple:
+		return self.getattr('anchor')
+
+	@property
+	def properties(self) -> dict:
+		return self.getattr('properties')
+
+	@property
+	def layers(self):
+		if self._layers is None:
+			self._layers = get_value_layers(self.range_values)
+		return self._layers
+
+	@property
+	def range_values(self) -> np.ndarray:
+		ver_range = slice(self.y_anchor, self.y_anchor+self.outer_height)
+		hor_range = slice(self.x_anchor, self.x_anchor+self.outer_width)
+		return self.values[ver_range, hor_range]
 
 	@property
 	def df(self) -> pd.DataFrame:
-		pass
+		if self._df is None:
+			self._df = ndarray_to_df(self.range_values)
+		return self._df
 
-	@property
-	def column_height(self) -> int:
-		return self.getattr('column_height')
+	@df.setter
+	def df(self, value):
+		self._df = value
 
 	@property
 	def index_width(self) -> int:
-		return self.getattr('index_width')
+		index_width = self.getattr('index_width')
+		if pd.isna(index_width):
+			index_width = get_index_width(self.layers)
+			self.setattr('index_width', index_width)
+		return index_width
 
-	def to_df(self, values: np.ndarray = None) -> pd.DataFrame:
-		column_height = None
-		index_width = None
+	@property
+	def column_height(self) -> int:
+		column_height = self.getattr('column_height')
+		if pd.isna(column_height):
+			column_height = get_column_height(self.layers)
+			self.setattr('column_height', column_height)
+		return column_height
 
-	def get_column_height(self, values: np.ndarray) -> int:
-		pass
+	@property
+	def inner_height(self) -> int:
+		self.setattr('inner_height', self.df.shape[0])
+		return self.df.shape[0]
 
-	def get_index_width(self, values: np.ndarray) -> int:
-		pass
+	@property
+	def inner_width(self) -> int:
+		self.setattr('inner_width', self.df.shape[1])
+		return self.df.shape[1]
+
+	@property
+	def outer_height(self) -> int:
+		return self.getattr('outer_height')
+
+	@property
+	def outer_width(self) -> int:
+		return self.getattr('outer_width')
+
+	@property
+	def parent(self) -> SheetBase:
+		return self.getattr('parent')
+
+	@property
+	def values(self) -> np.ndarray:
+		return self.parent.values
+
+	@values.setter
+	def values(self, value):
+		self.parent.values = value
+
+	@property
+	def rowCount(self) -> int:
+		return self.parent.rowCount
+
+	@property
+	def columnCount(self) -> int:
+		return self.parent.columnCount
+
+	def __iter__(self) -> Generator[pd.Series, None, None]:
+		yield from self.df.iterrows()
+
+	def update(self):
+		new_values = to_ndarray(self.df, keep_columns=True)
+		self.update_sheet(
+			values=new_values,
+			x_offset=self.x_anchor,
+			y_offset=self.y_anchor)
+
+	def detonate(self):
+		self.clear_range(
+			x_offset=self.x_anchor,
+			y_offset=self.y_anchor,
+			width=self.outer_width,
+			height=self.outer_height)
+
+	def reanchor(self, y_anchor, x_anchor):
+		curr_values = self.range_values.copy()
+		self.detonate()
+		self.update_sheet(
+			values=curr_values,
+			x_offset=x_anchor,
+			y_offset=y_anchor)
+		self.setattr('anchor', (y_anchor, x_anchor))
+
+	def update_row(
+		self,
+		row:pd.Series,
+	):
+		y_offset = self.find_y(row)
+		x_offset = self.x_anchor + self.index_width
+		input_values = to_ndarray(row, False)
+		self.update_sheet(
+			values=input_values,
+			x_offset=x_offset,
+			y_offset=y_offset)
+
+	def find_y(self, row: pd.Series) -> int:
+		index = row.name
+
+		for i, idx in enumerate(self.df.index):
+			if idx == index:
+				return i + self.y_anchor + self.column_height
+
+		return None
+
+	def set_dims(self):
+		self.df
+		self.column_height
+		self.index_width
+		self.inner_height
+		self.inner_width
+
+	def delete_row(
+		self,
+		row: pd.Series
+	):
+		y_offset = self.find_y(row)
+		x_offset = self.x_anchor + self.index_width
+		input_values = to_ndarray(row, False)
+		empty_arr = np.ndarray(shape=input_values.shape, dtype='object')
+		self.update_sheet(
+			values=empty_arr,
+			x_offset=x_offset,
+			y_offset=y_offset)
+
+	def append(
+		self,
+		data: DATA_TYPES,
+	):
+		data = self.convert_input(data)
+		validated = self.validate_shape(data)
+
+		if not validated:
+			return False
+
+		data = self.rearrange(data)
+		input_values = to_ndarray(data, False)
+		x_offset = self.x_anchor
+		y_offset = self.y_anchor + self.outer_height
+		self.update_sheet(
+			values=input_values,
+			x_offset=x_offset,
+			y_offset=y_offset)
+		new_outer_height = self.outer_height + input_values.shape[0]
+		self.setattr(
+			'outer_height',
+			new_outer_height)
+		appendee = data
+
+		if isinstance(data, ARRAY_TYPES):
+			if self.index_width > 0:
+				idx = make_frame_edges(
+					data[:, 0:self.index_width],
+					'index')
+				body = data[:, self.index_width:]
+				appendee = pd.DataFrame(
+					data=body,
+					columns=self.df.columns,
+					index=idx)
+			else:
+				appendee = pd.DataFrame(
+					data=data,
+					columns=self.df.columns)
+
+		self.df = pd.concat(
+			[self.df, appendee],
+			axis=0)
+		self.set_dims()
+		return True
+
+	def rearrange(
+		self,
+		data: Union[pd.DataFrame, np.ndarray, pd.Series]
+	) -> Union[pd.DataFrame, np.ndarray]:
+		if isinstance(data, (np.ndarray, pd.Series)):
+			return data
+
+		missing_cols = list(set(self.df.columns) - set(data.columns))
+
+		if len(missing_cols) > 0:
+			data.loc[:, missing_cols] = None
+
+		data.columns = self.df.columns
+		return data
+
+	def validate_shape(
+		self,
+		data: Union[pd.DataFrame, np.ndarray]
+	) -> bool:
+		if not isinstance(data, (pd.DataFrame, np.ndarray)):
+			raise Exception(
+				'Only pd.DataFrame and np,ndarray can be appended to Table')
+
+		if isinstance(data, np.ndarray):
+			if data.shape[1] == self.outer_width:
+				return True
+		elif isinstance(data, pd.DataFrame):
+			if self.index_width == data.bamboo.index_width:
+				if len(list(set(self.df.columns) & set(data.columns))) > 1:
+					return True
+
+		return False
 
 class ValueLayers(Lego):
 
@@ -55,29 +303,12 @@ class ValueLayers(Lego):
 		kwargs['values'] = values
 		kwargs['width'] = None
 		super().__init__(**kwargs)
+		self.bin_layer = self.make_layer(values)
+		self.ver_layer = self.make_layer(values)
 
 	@property
 	def values(self) -> np.ndarray:
 		return self.getattr('values')
-
-	@property
-	def bin_layer(self) -> np.ndarray:
-		bin_layer = self.getattr('bin_layer')
-
-		if bin_layer is None:
-			bin_layer = self.make_layer(self.values)
-			self.setattr('bin_layer', bin_layer)
-
-		return bin_layer
-
-	@property
-	def ver_layer(self) -> np.ndarray:
-		ver_layer = self.getattr('ver_layer')
-		if ver_layer is None:
-			ver_layer = self.make_layer(self.values)
-			self.setattr('ver_ayer', ver_layer)
-
-		return ver_layer
 
 	@property
 	def first_fill_idx(self):
@@ -93,10 +324,6 @@ class ValueLayers(Lego):
 	@property
 	def max_fill_idx(self) -> int | None:
 		return self.get_max_fill_idx()
-
-	@property
-	def last_fill_col(self):
-		pass
 
 	@property
 	def width(self) -> int:
@@ -144,9 +371,12 @@ class ValueLayers(Lego):
 			if row_len == row_sum:
 				if max_sum is None:
 					idx = i
+					max_sum = row_sum
+					self.setattr('width', row_sum)
 				else:
 					if max_sum < row_sum:
 						idx = i
+						max_sum = row_sum
 						self.setattr('width', row_sum)
 
 		return idx
@@ -172,15 +402,15 @@ class SheetSquared:
 		cls,
 		anchor: tuple,
 		layers: ValueLayers
-	) -> Iterable[np.ndarray, ValueLayers]:
+	) -> Tuple[np.ndarray, ValueLayers]:
 		width = cls.get_width(anchor, layers)
 
-		if width == 0:
+		if width < 1:
 			return None, layers
 
 		height = cls.get_height(anchor, width, layers)
 
-		if height == 0:
+		if height < 2:
 			return None, layers
 
 		region = (

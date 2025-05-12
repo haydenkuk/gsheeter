@@ -1,6 +1,6 @@
 from enum import Enum
 
-class SheetEnum:
+class SheetEnum(Enum):
   @classmethod
   def _missing_(cls, value):
     if isinstance(value, str):

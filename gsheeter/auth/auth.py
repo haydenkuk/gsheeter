@@ -1,6 +1,6 @@
 import json, os, platform
 from pathlib import Path
-from google.auth.api_key import Credentials
+from google.auth.api_key import Credentials as APIKeyCredentials
 from google.oauth2.credentials import Credentials as OAuthCredentials
 from google.oauth2.service_account import Credentials as SACredentials
 from requests import Session
@@ -23,18 +23,9 @@ def get_config_dir(
 	return Path(Path.home(), '.config', config_dir)
 
 DEFAULT_CONFIG_DIR = get_config_dir()
-DEFAULT_CREDENTIALS_FILENAME = os.path.join(
-	DEFAULT_CONFIG_DIR,
-	'gcreds.json'
-)
-DEFAULT_AUTHORIZED_USER_FILENAME = os.path.join(
-	DEFAULT_CONFIG_DIR,
-	'auth_user.json'
-)
-DEFAULT_SERVICE_ACCOUNT_FILENAME = os.path.join(
-	DEFAULT_CONFIG_DIR,
-	'service_account.json'
-)
+DEFAULT_CREDENTIALS_FILENAME = DEFAULT_CONFIG_DIR / 'gcreds.json'
+DEFAULT_AUTHORIZED_USER_FILENAME = DEFAULT_CONFIG_DIR /'auth_user.json'
+DEFAULT_SERVICE_ACCOUNT_FILENAME = DEFAULT_CONFIG_DIR / 'service_account.json'
 
 
 from gsheeter.client.client import Client
@@ -67,11 +58,12 @@ def service_account(
 		filename = input
 		_credentials = SACredentials.from_service_account_file(
 			filename=filename,
-			scopes=scopes
-		)
+			scopes=scopes)
+
 	_client = Client(
 		auth=_credentials,
 		info=info,
-		filename=filename
-	)
+		filename=filename)
 
+def oauth():
+	pass

@@ -53,8 +53,6 @@ class Lego(UserDict):
 			keys = key if type(key) == list else [key]
 			set_nested_value(self.data, keys, value)
 
-		self.stamp()
-
 	def getattr(self, key):
 		return nested_recursive_search(self.data, key)
 

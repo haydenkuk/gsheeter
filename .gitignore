@@ -1,5 +1,7 @@
 *.pyc
 *.json
+*.xlsx
 venv/
+win/
 test.py
 __pycache__/

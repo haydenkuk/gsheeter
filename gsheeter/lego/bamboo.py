@@ -1,6 +1,10 @@
 import pandas as pd
 from . import types
+from ..spreadsheet.sheet_utils import (
+	has_digit_index
+)
 
+@pd.api.extensions.register_dataframe_accessor('bamboo')
 class Bamboo:
 
 	def __init__(self, pandas_obj:pd.DataFrame):
@@ -26,15 +30,9 @@ class Bamboo:
 
 	@property
 	def index_width(self):
-		if self.has_digit_index():
+		if has_digit_index(self.df.index.tolist()):
 			return 0
-
 		return self.df.index.nlevels
-
-	def has_digit_index(self):
-		return all(
-			[types.DIGIT_REGEX.match(str(idx)) for idx in self.df.index.tolist()]
-		)
 
 	def is_num(self, value):
 		if type(value) == str:

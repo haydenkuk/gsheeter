@@ -3,6 +3,7 @@ from .file import File
 from .folder import Folder
 from . import drive_types
 import os
+from ..cache.cache import cache
 from googleapiclient.http import MediaFileUpload
 from ..spreadsheet.spreadsheet import Spreadsheet
 import pandas as pd
@@ -15,17 +16,7 @@ from .drive_endpoints import (
 	DRIVE_ENDPOINTS
 )
 
-
 class Drive(GoogleAPI):
-
-	@classmethod
-	def parse_search_query(
-		cls,
-		pos: bool = True,
-		operator: str = '=',
-		**kwargs
-	) -> str:
-		pass
 
 	@classmethod
 	def get_files(
@@ -43,8 +34,7 @@ class Drive(GoogleAPI):
 			files=files,
 			pageToken=pageToken,
 			supportsAllDrives=supportsAllDrives,
-			includeItemsFromAllDrives=includeItemsFromAllDrives
-		)
+			includeItemsFromAllDrives=includeItemsFromAllDrives)
 		result = cls.request(**endpoint_items)
 		pageToken = result.get('pageToken')
 		output = pd.DataFrame(result.get('files', []))
@@ -66,7 +56,10 @@ class Drive(GoogleAPI):
 		target: str,
 		folderId: str = None,
 	) -> File:
-		file = None
+		file = cache.get_item(target)
+
+		if file is not None:
+			return file
 
 		if folderId is not None:
 			q = f"'{folderId}' in parents and trashed = false"
@@ -86,6 +79,7 @@ class Drive(GoogleAPI):
 			result = cls.request(**endpoint_items)
 			file = File(**result)
 
+		cache.set_item(file)
 		return file
 
 	@classmethod
@@ -94,17 +88,23 @@ class Drive(GoogleAPI):
 		target: str,
 		folderId: str = None
 	) -> Spreadsheet:
-		spreadsheetId = target
+		spreadsheet: Spreadsheet = cache.get_item(target)
+
+		if spreadsheet is not None:
+			return spreadsheet
 
 		if folderId is not None:
 			file = cls.get_file(target=target, folderId=folderId)
 			spreadsheetId = file.getattr('id')
+		else:
+			spreadsheetId = target
 
 		endpoint_items = SHEETS_ENDPOINTS['spreadsheets']['get']
 		endpoint_items['endpoint'] = endpoint_items['endpoint'].format(
 			spreadsheetId=spreadsheetId)
 		spreadsheet = cls.request(**endpoint_items)
 		spreadsheet = Spreadsheet(**spreadsheet)
+		cache.set_item(spreadsheet)
 		return spreadsheet
 
 	@classmethod
@@ -133,7 +133,7 @@ class Drive(GoogleAPI):
 		cls,
 		filename: str,
 		sheetname: str = None,
-		parentId: str = None
+		parentId: str = None,
 	) -> Spreadsheet:
 		req = {
 			'properties': {
@@ -158,7 +158,7 @@ class Drive(GoogleAPI):
 			res = cls.move_file(
 				ss.getattr('spreadsheetId'),
 				parentId=parentId)
-
+		cache.set_item(ss)
 		return ss
 
 	@classmethod
@@ -171,7 +171,6 @@ class Drive(GoogleAPI):
 		**kwargs
 	) -> None:
 		name, filepath = cls.get_filename(name=name, filepath=filepath)
-
 
 	@classmethod
 	def parse_mimetype(cls, string:str):

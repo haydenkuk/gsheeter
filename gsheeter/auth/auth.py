@@ -28,7 +28,7 @@ DEFAULT_AUTHORIZED_USER_FILENAME = DEFAULT_CONFIG_DIR /'auth_user.json'
 DEFAULT_SERVICE_ACCOUNT_FILENAME = DEFAULT_CONFIG_DIR / 'service_account.json'
 
 
-from gsheeter.client.client import Client
+from ..client.client import Client
 
 _credentials = None
 _client = None

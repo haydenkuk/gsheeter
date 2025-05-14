@@ -1,8 +1,6 @@
 from .base import SpreadsheetBase
-from icecream import ic
 from typing import Generator
 from .sheet import Sheet
-ic.configureOutput(includeContext=True)
 
 class Spreadsheet(SpreadsheetBase):
 

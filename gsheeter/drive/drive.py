@@ -7,8 +7,6 @@ from ..cache.cache import cache
 from googleapiclient.http import MediaFileUpload
 from ..spreadsheet.spreadsheet import Spreadsheet
 import pandas as pd
-from icecream import ic
-ic.configureOutput(includeContext=True)
 from ..spreadsheet.sheets_endpoints import (
 	SHEETS_ENDPOINTS,
 )

@@ -6,3 +6,4 @@ win/
 test.py
 __pycache__/
 tests/
+dist/

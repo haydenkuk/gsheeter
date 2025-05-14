@@ -3,12 +3,9 @@ import traceback, time
 from typing import Mapping
 from .property import classproperty
 from requests import Response, Session
-from icecream import ic
-from bs4 import BeautifulSoup
 from .exceptions import (
 	NotFoundException
 )
-ic.configureOutput(includeContext=True)
 
 BASE_URLS = {
 	'spreadsheets': 'https://sheets.googleapis.com',
@@ -87,7 +84,6 @@ class GoogleAPI:
 			result:dict = res.json()
 
 			if (error := result.get('error')) is not None:
-				ic(result, url, data)
 				status = error['status']
 
 				if status == 'NOT_FOUND':

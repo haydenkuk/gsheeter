@@ -15,9 +15,7 @@ from .sheet_utils import (
 	rectanglize,
 	get_value_layers,
 )
-from icecream import ic
 from copy import deepcopy
-ic.configureOutput(includeContext=True)
 ENDPOINT_FORMATTERS = ['spreadsheetId', 'sheetId']
 
 class SpreadsheetBase(Lego, GoogleAPI):
@@ -162,13 +160,18 @@ class SheetBase(SpreadsheetBase):
 		y_coord = 0
 		layers = get_value_layers(matrix)
 
-		for i, row in enumerate(layers.bin_layer):
-			subrow = row[x_offset:x_offset+width]
-
-			if subrow.sum() > 0:
-				y_coord = i
-			else:
+		for i in range(x_offset, x_offset+width):
+			if i >= matrix.shape[1]:
 				break
+
+			col = layers.bin_layer[:, i]
+			indices = np.where(col == 1)[0]
+
+			if len(indices) > 0:
+				last_idx = indices[-1]
+
+				if last_idx > y_coord:
+					y_coord = last_idx
 
 		return y_coord
 
@@ -310,8 +313,8 @@ class SheetBase(SpreadsheetBase):
 		y_offset: int,
 	) -> None:
 		shape = values.shape
-		row_diff =  (shape[0] + y_offset) - self.rowCount
-		col_diff =  (shape[1] + x_offset) - self.columnCount
+		row_diff = int((shape[0] + y_offset) - self.rowCount)
+		col_diff =  int((shape[1] + x_offset) - self.columnCount)
 
 		if row_diff > 0:
 			self.append_dimension('ROWS', row_diff, False)

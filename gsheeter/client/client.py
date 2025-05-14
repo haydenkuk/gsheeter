@@ -5,7 +5,6 @@ from typing import (
 	Iterable, Mapping, Any, Union, Optional
 )
 from pathlib import Path
-from apiclient import discovery
 from .client_utils import convert_credentials
 
 

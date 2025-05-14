@@ -1,5 +1,6 @@
 from .base import SheetBase
 import pandas as pd, numpy as np
+from pandas import RangeIndex
 import datetime as dt, sys
 from .sheets_enum import Dimension
 from typing import (
@@ -14,17 +15,15 @@ from .sheet_types import (
 	ARRAY_TYPES,
 	DATA_TYPES,
 )
-from icecream import ic
 from .sheet_utils import (
 	get_value_layers,
 	has_digit_index,
 	to_ndarray
 )
-from gsheeter.environ.environ import (
+from ..environ.environ import (
 	TABLE_BUFFER,
 	TABLE_FILLER,
 )
-ic.configureOutput(includeContext=True)
 
 
 class Sheet(SheetBase):
@@ -120,7 +119,20 @@ class Sheet(SheetBase):
 
 				if square is not None:
 					table = self.get_table(anchor, *square.shape)
-					tables.append(table)
+					columns = np.array([
+						'-'.join(c)
+						for c in table.df.columns
+					])
+					unique_cols = np.unique(columns)
+					add_table = len(columns) == len(unique_cols)
+
+					if not isinstance((index := table.df.index), RangeIndex) and add_table:
+						index = np.array([str(r) for r in index])
+						unique_idx = np.unique(index)
+						add_table = len(index) == len(unique_idx)
+
+					if add_table:
+						tables.append(table)
 
 		return tables
 
@@ -147,7 +159,8 @@ class Sheet(SheetBase):
 		first_fill_idx = vl.first_fill_idx
 		max_fill_idx = vl.max_fill_idx
 
-		if first_fill_idx is None and max_fill_idx is None:
+		if (first_fill_idx is None
+			and max_fill_idx is None):
 			return False
 
 		first_fill_row = values[first_fill_idx]
@@ -158,7 +171,13 @@ class Sheet(SheetBase):
 			]
 		):
 			return False
-		return first_fill_idx == max_fill_idx
+
+		first_row = values[first_fill_idx]
+		unique_arr = np.unique(first_row[pd.notna(first_row)])
+		return (
+			first_fill_idx == max_fill_idx and
+			len(first_row) == len(unique_arr)
+		)
 
 	def set_values(
 		self,
@@ -228,37 +247,6 @@ class Sheet(SheetBase):
 
 			if result:
 				break
-
-		return result
-
-	def table_append_condition(
-		self,
-		data: DATA_TYPES,
-		x_offset: int,
-		table: Table,
-	) -> bool:
-		result = False
-
-		if x_offset != table.x_anchor:
-			return result
-
-		if isinstance(data, ARRAY_TYPES):
-
-			if table.outer_width == data.shape[1]:
-				result = True
-
-		elif isinstance(data, FRAME_TYPES):
-			data_digit_indexed = has_digit_index(data.index.tolist())
-			table_digit_indexed = has_digit_index(table.df.index.tolist())
-			data_cols = data.columns
-			table_cols = table.df.columns
-			index_test = data_digit_indexed == table_digit_indexed
-
-			if index_test:
-				comm_cols = list(set(data_cols) & set(table_cols))
-
-				if len(comm_cols) > 0:
-					result = True
 
 		return result
 

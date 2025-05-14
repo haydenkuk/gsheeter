@@ -1,4 +1,4 @@
-# DRY Google spreadsheet Python API
+""" Google spreadsheet Python API Abstractor """
 
 __version__ = '0.0.0'
 __author__ = 'Yunjong Guk'

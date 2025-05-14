@@ -12,7 +12,6 @@ from .sheet_types import (
 	ARRAY_TYPES
 )
 from copy import deepcopy
-from icecream import ic
 from .sheet_utils import (
 	ndarray_to_df,
 	get_index_width,
@@ -21,7 +20,6 @@ from .sheet_utils import (
 	to_ndarray,
 	make_frame_edges
 )
-ic.configureOutput(includeContext=True)
 
 
 class Table(SheetBase):
@@ -264,7 +262,16 @@ class Table(SheetBase):
 		self,
 		data: Union[pd.DataFrame, np.ndarray, pd.Series]
 	) -> Union[pd.DataFrame, np.ndarray]:
-		if isinstance(data, (np.ndarray, pd.Series)):
+		if isinstance(data, pd.Series):
+			return data
+
+		if isinstance(data, np.ndarray):
+			if data.shape[1] < self.outer_width:
+				width_diff = self.outer_width - data.shape[1]
+				empty_arr = np.empty(
+					shape=(data.shape[0], width_diff),
+					dtype='object')
+				data = np.concatenate((data, empty_arr), axis=1)
 			return data
 
 		missing_cols = list(set(self.df.columns) - set(data.columns))
@@ -284,7 +291,13 @@ class Table(SheetBase):
 				'Only pd.DataFrame and np,ndarray can be appended to Table')
 
 		if isinstance(data, np.ndarray):
-			if data.shape[1] == self.outer_width:
+			if data.shape[1] <= self.outer_width:
+				if self.index_width > 0:
+					idx_part = data[:, 0:self.index_width]
+					idx_part = np.array([str(r) for r in idx_part])
+					unique_idx = np.unique(idx_part)
+					return len(idx_part) == len(unique_idx)
+
 				return True
 		elif isinstance(data, pd.DataFrame):
 			if self.index_width == data.bamboo.index_width:

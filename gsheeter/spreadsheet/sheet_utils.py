@@ -13,8 +13,6 @@ from .sheet_types import (
 from ..lego import types
 from typing import Iterable
 from pandas import RangeIndex
-from icecream import ic
-ic.configureOutput(includeContext=True)
 
 
 def rectanglize(values: list) -> list:
@@ -129,6 +127,8 @@ def has_digit_index(values: DATA_TYPES) -> bool:
 	if isinstance(values, pd.DataFrame):
 		if isinstance(values.index, RangeIndex):
 			return True
+		else:
+			return False
 	return all([types.DIGIT_REGEX.match(str(val)) for val in values])
 
 def make_frame_edges(

@@ -1,5 +1,3 @@
-from typing import Any
-
 IDENTIFIERS = [
 	'id',
 	'spreadsheetId',
@@ -22,7 +20,7 @@ class CacheService:
 					return item
 		return None
 
-	def set_item(self, obj: Any):
+	def set_item(self, obj):
 		if not USE_CACHE:
 			return
 		self.items.append(obj)

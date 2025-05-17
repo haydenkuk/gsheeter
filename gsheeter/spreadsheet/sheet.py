@@ -203,13 +203,14 @@ class Sheet(SheetBase):
           self.tables.pop(i)
           break
     elif isinstance(target, int):
-      t = self.tables[target]
-      self.clear_range(
-        x_offset=t.x_anchor,
-        y_offset=t.y_anchor,
-        width=t.outer_width,
-        height=t.outer_height)
-      self.tables.pop(target)
+      if target < len(self.tables):
+        t = self.tables[target]
+        self.clear_range(
+          x_offset=t.x_anchor,
+          y_offset=t.y_anchor,
+          width=t.outer_width,
+          height=t.outer_height)
+        self.tables.pop(target)
 
   def set_values(
     self,

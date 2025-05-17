@@ -60,8 +60,8 @@ class GoogleAPI:
 		cls,
 		method: str,
 		endpoint: str,
-		data: dict = None,
-		headers: dict = None,
+		data: dict | None = None,
+		headers: dict | None = None,
 		**kwargs
 	):
 		base_url = cls.base_url(endpoint=endpoint)

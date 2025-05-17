@@ -4,7 +4,8 @@ from ..lego.bamboo import Bamboo
 import numpy as np, pandas as pd
 from .sheets_enum import IndexType
 from typing import (
-	Tuple, Union, Generator
+	Tuple, Union, Generator,
+	Hashable
 )
 from .sheet_types import (
 	DIMENSIONS,
@@ -73,19 +74,19 @@ class Table(SheetBase):
 	@property
 	def layers(self):
 		if self._layers is None:
-			self._layers = get_value_layers(self.range_values)
+			self._layers = get_value_layers(self.range_matrix)
 		return self._layers
 
 	@property
-	def range_values(self) -> np.ndarray:
+	def range_matrix(self) -> np.ndarray:
 		ver_range = slice(self.y_anchor, self.y_anchor+self.outer_height)
 		hor_range = slice(self.x_anchor, self.x_anchor+self.outer_width)
-		return self.values[ver_range, hor_range]
+		return self.matrix[ver_range, hor_range]
 
 	@property
 	def df(self) -> pd.DataFrame:
 		if self._df is None:
-			self._df = ndarray_to_df(self.range_values)
+			self._df = ndarray_to_df(self.range_matrix)
 		return self._df
 
 	@df.setter
@@ -131,12 +132,12 @@ class Table(SheetBase):
 		return self.getattr('parent')
 
 	@property
-	def values(self) -> np.ndarray:
-		return self.parent.values
+	def matrix(self) -> np.ndarray:
+		return self.parent.matrix
 
-	@values.setter
-	def values(self, value):
-		self.parent.values = value
+	@matrix.setter
+	def matrix(self, value):
+		self.parent.matrix = value
 
 	@property
 	def rowCount(self) -> int:
@@ -146,13 +147,13 @@ class Table(SheetBase):
 	def columnCount(self) -> int:
 		return self.parent.columnCount
 
-	def __iter__(self) -> Generator[pd.Series, None, None]:
+	def __iter__(self) -> Generator[tuple[Hashable, pd.Series], None, None]:
 		yield from self.df.iterrows()
 
-	def update(self):
-		new_values = to_ndarray(self.df, keep_columns=True)
+	def sheetupdate(self):
+		new_matrix = to_ndarray(self.df, keep_columns=True)
 		self.update_sheet(
-			values=new_values,
+			matrix=new_matrix,
 			x_offset=self.x_anchor,
 			y_offset=self.y_anchor)
 
@@ -164,10 +165,10 @@ class Table(SheetBase):
 			height=self.outer_height)
 
 	def reanchor(self, y_anchor, x_anchor):
-		curr_values = self.range_values.copy()
+		curr_matrix = self.range_matrix.copy()
 		self.detonate()
 		self.update_sheet(
-			values=curr_values,
+			matrix=curr_matrix,
 			x_offset=x_anchor,
 			y_offset=y_anchor)
 		self.setattr('anchor', (y_anchor, x_anchor))
@@ -178,9 +179,9 @@ class Table(SheetBase):
 	):
 		y_offset = self.find_y(row)
 		x_offset = self.x_anchor + self.index_width
-		input_values = to_ndarray(row, False)
+		input_matrix = to_ndarray(row, False)
 		self.update_sheet(
-			values=input_values,
+			matrix=input_matrix,
 			x_offset=x_offset,
 			y_offset=y_offset)
 
@@ -191,7 +192,7 @@ class Table(SheetBase):
 			if idx == index:
 				return i + self.y_anchor + self.column_height
 
-		return None
+		raise Exception('ROW NOT FOUND IN TABLE')
 
 	def set_dims(self):
 		self.df
@@ -206,12 +207,12 @@ class Table(SheetBase):
 	):
 		y_offset = self.find_y(row)
 		x_offset = self.x_anchor + self.index_width
-		input_values = to_ndarray(row, False)
-		empty_arr = np.ndarray(shape=input_values.shape, dtype='object')
-		self.update_sheet(
-			values=empty_arr,
+		input_matrix = to_ndarray(row, False)
+		self.clear_range(
 			x_offset=x_offset,
-			y_offset=y_offset)
+			y_offset=y_offset,
+			width=input_matrix.shape[1],
+			height=input_matrix.shape[0])
 
 	def append(
 		self,
@@ -224,14 +225,14 @@ class Table(SheetBase):
 			return False
 
 		data = self.rearrange(data)
-		input_values = to_ndarray(data, False)
+		input_matrix = to_ndarray(data, False)
 		x_offset = self.x_anchor
 		y_offset = self.y_anchor + self.outer_height
 		self.update_sheet(
-			values=input_values,
+			matrix=input_matrix,
 			x_offset=x_offset,
 			y_offset=y_offset)
-		new_outer_height = self.outer_height + input_values.shape[0]
+		new_outer_height = self.outer_height + input_matrix.shape[0]
 		self.setattr(
 			'outer_height',
 			new_outer_height)
@@ -252,16 +253,14 @@ class Table(SheetBase):
 					data=data,
 					columns=self.df.columns)
 
-		self.df = pd.concat(
-			[self.df, appendee],
-			axis=0)
+		self.df = pd.concat([self.df, appendee], axis=0)
 		self.set_dims()
 		return True
 
 	def rearrange(
 		self,
 		data: Union[pd.DataFrame, np.ndarray, pd.Series]
-	) -> Union[pd.DataFrame, np.ndarray]:
+	) -> Union[pd.DataFrame, np.ndarray, pd.Series]:
 		if isinstance(data, pd.Series):
 			return data
 
@@ -310,18 +309,18 @@ class ValueLayers(Lego):
 
 	def __init__(
 		self,
-		values: np.ndarray,
+		matrix: np.ndarray,
 		**kwargs
 	):
-		kwargs['values'] = values
+		kwargs['matrix'] = matrix
 		kwargs['width'] = None
 		super().__init__(**kwargs)
-		self.bin_layer = self.make_layer(values)
-		self.ver_layer = self.make_layer(values)
+		self.bin_layer = self.make_layer(matrix)
+		self.ver_layer = self.make_layer(matrix)
 
 	@property
-	def values(self) -> np.ndarray:
-		return self.getattr('values')
+	def matrix(self) -> np.ndarray:
+		return self.getattr('matrix')
 
 	@property
 	def first_fill_idx(self):
@@ -396,11 +395,11 @@ class ValueLayers(Lego):
 
 	def make_layer(
 		self,
-		values: np.ndarray,
+		matrix: np.ndarray,
 		none_val: int = 0,
 		fill_val: int = 1,
 	) -> np.ndarray:
-		layer = values.copy()
+		layer = matrix.copy()
 		layer = np.where(
 			(layer == None),
 			none_val,
@@ -430,7 +429,7 @@ class SheetSquared:
 			slice(anchor[0], anchor[0]+height),
 			slice(anchor[1], anchor[1]+width)
 		)
-		square = layers.values[region]
+		square = layers.matrix[region]
 		layers.ver_layer[region] = -1
 		return square, layers
 

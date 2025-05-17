@@ -12,9 +12,9 @@ class Client:
 
 	def __init__(
 		self,
-		auth: Credentials = None,
-		info: Mapping[str, Any] = None,
-		filename: Union[Path, str] = None
+		auth: Credentials,
+		info: Mapping[str, Any] | None,
+		filename: Union[Path, str, None]
   ) -> None:
 		self._auth = auth
 		self.info = info

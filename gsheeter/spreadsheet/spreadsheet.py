@@ -1,5 +1,5 @@
 from .base import SpreadsheetBase
-from typing import Generator
+from typing import Generator, Iterable, Mapping, List
 from .sheet import Sheet
 
 class Spreadsheet(SpreadsheetBase):
@@ -9,8 +9,8 @@ class Spreadsheet(SpreadsheetBase):
 		self._sheet_identifiers = ('sheetId', 'title')
 
 	@property
-	def sheets(self):
-		sheets = self.getattr('sheets')
+	def sheets(self) -> List[Sheet]:
+		sheets: list = self.getattr('sheets')
 		sheets = self.sheetify(sheets)
 		self.setattr('sheets', sheets)
 		return sheets
@@ -28,19 +28,22 @@ class Spreadsheet(SpreadsheetBase):
 			if type(sheet) == Sheet:
 				continue
 			sheets[i] = Sheet(**sheet)
+
 		return sheets
 
 	def find_sheet(
 		self,
-		target: str,
-	):
+		target: str | Sheet,
+	) -> Sheet | None:
+		if isinstance(target, Sheet):
+			return target
+
 		for i, sheet in enumerate(self.sheets):
 			for id in self.sheet_identifiers:
-				if sheet.getattr(id) == target:
+				if str(sheet.getattr(id)).strip() == str(target).strip():
 					sheet.setattr(
 						'spreadsheetId',
-						self.getattr('spreadsheetId')
-					)
+						self.getattr('spreadsheetId'))
 					self.sheets[i] = sheet
 					return sheet
 		return None
@@ -50,7 +53,7 @@ class Spreadsheet(SpreadsheetBase):
 		target: str,
 		delete_exist: bool = False,
 		add: bool = True,
-	):
+	) -> Sheet:
 		sheet = self.find_sheet(target)
 
 		if sheet is not None and delete_exist:
@@ -59,13 +62,16 @@ class Spreadsheet(SpreadsheetBase):
 		if add and sheet is None:
 			sheet = self.add_sheet(sheetname=target)
 
+		if sheet is None:
+			raise Exception('SHEET NOT FOUND NOR ADDED')
+
 		return sheet
 
 	def delete_sheet(
 		self,
-		target,
+		target: str | Sheet,
 		exec: bool=True,
-	) -> None:
+	) -> bool:
 		from .sheet import Sheet
 		sheetId = target.getattr('sheetId') if type(target) == Sheet else None
 
@@ -100,12 +106,12 @@ class Spreadsheet(SpreadsheetBase):
 		sheetname: str='Sheet1',
 		rowCount: int=1000,
 		columnCount: int=26,
-		index: int=0,
-	):
+		index: int | None = None,
+	) -> Sheet:
 		from .sheet import Sheet
 		sheet = self.find_sheet(sheetname)
 
-		if sheet is not None:
+		if sheet is not None and isinstance(sheet, Sheet):
 			return sheet
 
 		req = {
@@ -116,13 +122,25 @@ class Spreadsheet(SpreadsheetBase):
 						'rowCount': rowCount,
 						'columnCount': columnCount
 					},
-					'index': index
 				}
 			}
 		}
+
+		if index is not None:
+			req['addSheet']['properties']['index'] = index
+
 		self.requests.append(req)
-		result: dict= self.batchUpdate(self.requests)
-		sheet = result.get('replies')[0].get('addSheet')
+		result: dict | None = self.batchUpdate(self.requests)
+
+		if result is None:
+			raise Exception('ADD_SHEET FAILED')
+
+		replies: list = result.get('replies', [])
+
+		if len(replies) == 0:
+			raise Exception('ADD_SHEET FAILED')
+
+		sheet = replies[0].get('addSheet')
 		sheet = Sheet(**sheet)
 		sheet.setattr(
 			'spreadsheetId',

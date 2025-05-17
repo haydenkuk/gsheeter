@@ -21,7 +21,7 @@ class Drive(GoogleAPI):
 		cls,
 		q: str,
 		files: str = 'files(name, webViewLink, id, mimeType), nextPageToken',
-		pageToken: str = None,
+		pageToken: str | None = None,
 		supportsAllDrives: str = 'true',
 		includeItemsFromAllDrives: str = 'true',
 	) -> pd.DataFrame:
@@ -52,25 +52,25 @@ class Drive(GoogleAPI):
 	def get_file(
 		cls,
 		target: str,
-		folderId: str = None,
+		folderId: str | None = None,
 	) -> File:
 		file = cache.get_item(target)
 
-		if file is not None:
+		if file is not None and isinstance(file, File):
 			return file
 
 		if folderId is not None:
 			q = f"'{folderId}' in parents and trashed = false"
 			result = cls.get_files(q=q)
-			file: pd.DataFrame= result[
+			req_result: pd.DataFrame= result[
 				(result['name'] == target) |
 				(result['id'] == target)
 			]
 
-			if len(file) == 0:
+			if len(req_result) == 0:
 				raise Exception('FILE NOT FOUND')
 
-			file = File(**file.iloc[0].to_dict())
+			file = File(**req_result.iloc[0].to_dict())
 		else:
 			endpoint_items = DRIVE_ENDPOINTS['files']['get']
 			endpoint_items['endpoint'] = endpoint_items['endpoint'].format(fileId=target)
@@ -84,7 +84,7 @@ class Drive(GoogleAPI):
 	def get_spreadsheet(
 		cls,
 		target: str,
-		folderId: str = None
+		folderId: str | None = None
 	) -> Spreadsheet:
 		spreadsheet: Spreadsheet = cache.get_item(target)
 
@@ -112,7 +112,7 @@ class Drive(GoogleAPI):
 		parentId: str,
 		removeParents: str = 'root',
 		supportsAllDrives: str = 'true',
-	) -> None:
+	) -> dict:
 		payload = DRIVE_ENDPOINTS['files']['update']
 		payload['endpoint'] = payload['endpoint'].format(
 			fileId=fileId
@@ -130,8 +130,8 @@ class Drive(GoogleAPI):
 	def create_spreadsheet(
 		cls,
 		filename: str,
-		sheetname: str = None,
-		parentId: str = None,
+		sheetname: str | None = None,
+		parentId: str | None = None,
 	) -> Spreadsheet:
 		req = {
 			'properties': {
@@ -163,9 +163,9 @@ class Drive(GoogleAPI):
 	def create(
 		cls,
 		folder_id: str,
-		name: str = None,
-		filepath: str = None,
-		filetype: str = None,
+		name: str | None = None,
+		filepath: str | None= None,
+		filetype: str | None= None,
 		**kwargs
 	) -> None:
 		name, filepath = cls.get_filename(name=name, filepath=filepath)
@@ -186,8 +186,8 @@ class Drive(GoogleAPI):
 	@classmethod
 	def get_filename(
 		cls,
-		name:str=None,
-		filepath:str=None
+		name: str | None = None,
+		filepath: str | None = None
 	):
 		if filepath is None and name is None:
 			raise Exception('FILEPATH OR NAME REQUIRED')
@@ -200,8 +200,8 @@ class Drive(GoogleAPI):
 	@classmethod
 	def get_filetype(
 		cls,
-		name:str=None,
-		filetype:str=None
+		name: str | None = None,
+		filetype:str | None = None
 	):
 		if filetype is not None:
 			return filetype

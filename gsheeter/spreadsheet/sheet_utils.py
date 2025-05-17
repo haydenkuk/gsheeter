@@ -15,21 +15,21 @@ from typing import Iterable
 from pandas import RangeIndex
 
 
-def rectanglize(values: list) -> list:
-	width = max([len(row) for row in values])
+def rectanglize(matrix: list) -> list:
+	width = max([len(row) for row in matrix])
 
-	for i, row in enumerate(values):
+	for i, row in enumerate(matrix):
 		diff = width - len(row)
 
 		for j in range(0, diff):
-			values[i].append(None)
+			matrix[i].append(None)
 
-	return values
+	return matrix
 
-def jsonify_values(values: np.ndarray,) -> list:
-	output: np.ndarray= values.copy()
+def jsonify_matrix(matrix: np.ndarray,) -> list:
+	output: np.ndarray= matrix.copy()
 	output: np.ndarray = np.where(
-		pd.isna(values),
+		pd.isna(matrix),
 		'',
 		output)
 
@@ -59,15 +59,15 @@ def jsonify_values(values: np.ndarray,) -> list:
 	output: np.ndarray = numeric_formatter(output)
 	return output.tolist()
 
-def ndarray_to_df(values: np.ndarray) -> pd.DataFrame:
-	value_layers = get_value_layers(values)
+def ndarray_to_df(matrix: np.ndarray) -> pd.DataFrame:
+	value_layers = get_value_layers(matrix)
 	column_height = get_column_height(value_layers)
 	index_width = get_index_width(value_layers)
 	columns = make_frame_edges(
-		values[0:column_height:, index_width:],
+		matrix[0:column_height:, index_width:],
 		'column'
 	)
-	data = values[column_height:, index_width:]
+	data = matrix[column_height:, index_width:]
 	frame_args = {
 		'data': data,
 		'columns': columns
@@ -75,7 +75,7 @@ def ndarray_to_df(values: np.ndarray) -> pd.DataFrame:
 
 	if index_width > 0:
 		indexes = make_frame_edges(
-			values[column_height:, 0:index_width],
+			matrix[column_height:, 0:index_width],
 			'index'
 		)
 		frame_args['index'] = indexes
@@ -83,15 +83,15 @@ def ndarray_to_df(values: np.ndarray) -> pd.DataFrame:
 	df = pd.DataFrame(**frame_args)
 	return df
 
-def get_value_layers(values: np.ndarray):
+def get_value_layers(matrix: np.ndarray):
 	from .sheet_objects import ValueLayers
-	return ValueLayers(values=values)
+	return ValueLayers(matrix=matrix)
 
 def get_column_height(value_layers) -> int:
 	column_height = 1
 
-	for i in range(0, len(value_layers.values)):
-		row = value_layers.values[i]
+	for i in range(0, len(value_layers.matrix)):
+		row = value_layers.matrix[i]
 		buffers = row[row == TABLE_BUFFER]
 		bin_row = value_layers.bin_layer[i]
 		row_sum = bin_row.sum() - len(buffers)
@@ -106,15 +106,15 @@ def get_column_height(value_layers) -> int:
 	return column_height
 
 def get_index_width(value_layers) -> int:
-	if has_digit_index(value_layers.values[:, 0]):
+	if has_digit_index(value_layers.matrix[:, 0]):
 		return 0
 
 	index_width = 0
 
-	for i in range(0, len(value_layers.values[0])):
-		column_values = value_layers.values[:, i]
-		buffers = column_values[column_values == TABLE_BUFFER]
-		fillers = column_values[column_values == TABLE_FILLER]
+	for i in range(0, len(value_layers.matrix[0])):
+		column_matrix = value_layers.matrix[:, i]
+		buffers = column_matrix[column_matrix == TABLE_BUFFER]
+		fillers = column_matrix[column_matrix == TABLE_FILLER]
 
 		if len(buffers) > 0 or len(fillers) > 0:
 			index_width += 1
@@ -123,13 +123,13 @@ def get_index_width(value_layers) -> int:
 
 	return index_width
 
-def has_digit_index(values: DATA_TYPES) -> bool:
-	if isinstance(values, pd.DataFrame):
-		if isinstance(values.index, RangeIndex):
+def has_digit_index(matrix: DATA_TYPES) -> bool:
+	if isinstance(matrix, pd.DataFrame):
+		if isinstance(matrix.index, RangeIndex):
 			return True
 		else:
 			return False
-	return all([types.DIGIT_REGEX.match(str(val)) for val in values])
+	return all([types.DIGIT_REGEX.match(str(val)) for val in matrix])
 
 def make_frame_edges(
 	edges: np.ndarray,
@@ -164,17 +164,17 @@ def to_ndarray(
 			return np.array(data)
 		return data
 
-	values = data.values
+	matrix = data.values
 
 	if keep_columns:
 		column_array = get_column_array(data)
-		values = np.concatenate([column_array, values], axis=0)
+		matrix = np.concatenate([column_array, matrix], axis=0)
 
 	if not has_digit_index(data):
 		index_array = get_index_array(data)
-		values = np.concatenate((index_array, values), axis=1)
+		matrix = np.concatenate((index_array, matrix), axis=1)
 
-	return values
+	return matrix
 
 def get_column_char(column_index: int) -> str:
 	alph = ''

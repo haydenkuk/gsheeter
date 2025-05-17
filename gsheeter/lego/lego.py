@@ -8,6 +8,7 @@ from .funcs import (
 	nested_recursive_search,
 	get_all_keys
 )
+from typing import Any
 
 class Lego(UserDict):
 
@@ -16,17 +17,9 @@ class Lego(UserDict):
 			v = kwargs[k]
 			kwargs[k] = parse_date(v)
 
-		self._data = kwargs
-		self._data['created_at'] = dt.datetime.now() if kwargs.get('created_at') is None else kwargs['created_at']
-		self._data['updated_at'] = None if kwargs.get('updated_at') is None else kwargs['updated_at']
-
-	@property
-	def data(self):
-		return self._data
-
-	@data.setter
-	def data(self, value):
-		self.data = value
+		self.data = kwargs
+		self.data['created_at'] = dt.datetime.now() if kwargs.get('created_at') is None else kwargs['created_at']
+		self.data['updated_at'] = None if kwargs.get('updated_at') is None else kwargs['updated_at']
 
 	@property
 	def created_at(self):
@@ -53,7 +46,7 @@ class Lego(UserDict):
 			keys = key if type(key) == list else [key]
 			set_nested_value(self.data, keys, value)
 
-	def getattr(self, key):
+	def getattr(self, key) -> Any:
 		return nested_recursive_search(self.data, key)
 
 	def to_dict(self, to_json=False):

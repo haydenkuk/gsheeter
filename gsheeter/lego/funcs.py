@@ -115,7 +115,7 @@ def is_datetime(value):
 	return isinstance(value, types.DATETIME_TYPES)
 
 
-def parse_date(input) -> dt.datetime:
+def parse_date(input: str) -> dt.datetime:
   if type(input) == str:
     pattern_match = re.match(
       r'^(?=\d{2,4}\D\d{2,4})[\d\-\/\:\s]{6,}$',

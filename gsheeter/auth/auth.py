@@ -35,7 +35,7 @@ _client = None
 
 
 def service_account(
-	input: Union[Path, str] | Mapping[str, Any] = None,
+	input: Union[Path, str] | Mapping[str, Any],
 	scopes: Iterable[str] = DEFAULT_SCOPES,
 ):
 	global _client, _credentials
@@ -59,6 +59,9 @@ def service_account(
 		_credentials = SACredentials.from_service_account_file(
 			filename=filename,
 			scopes=scopes)
+
+	if filename is None:
+		raise Exception('FILE NOT FOUND')
 
 	_client = Client(
 		auth=_credentials,

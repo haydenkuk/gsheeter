@@ -11,7 +11,7 @@ from .sheets_enum import Dimension
 import sys
 from .sheet_utils import (
 	get_column_char,
-	jsonify_values,
+	jsonify_matrix,
 	rectanglize,
 	get_value_layers,
 )
@@ -63,17 +63,17 @@ class SpreadsheetBase(Lego, GoogleAPI):
 
 	def batchUpdate(
 		self,
-		requests: list = None,
+		requests: list = [],
 		object: str = 'spreadsheets',
-	) -> Mapping:
-		if requests is None:
+	) -> dict | None:
+		if len(requests) == 0:
 			requests = self.requests
 
 		if type(requests) != list:
 			requests = [requests]
 
 		if len(requests) == 0:
-			return
+			return None
 
 		endpoint_items = self.endpoints[object]['batchUpdate']
 		endpoint_items['data']['requests'] = requests
@@ -95,18 +95,18 @@ class SheetBase(SpreadsheetBase):
 		return self.getattr('sheetId')
 
 	@property
-	def values(self) -> np.ndarray:
-		values = self.getattr('values')
+	def matrix(self) -> np.ndarray:
+		matrix = self.getattr('matrix')
 
-		if values is None:
-			values = self.get_values()
-			self.setattr('values', values)
+		if matrix is None:
+			matrix = self.get_matrix()
+			self.setattr('matrix', matrix)
 
-		return values
+		return matrix
 
-	@values.setter
-	def values(self, value):
-		self.setattr('values', value)
+	@matrix.setter
+	def matrix(self, value):
+		self.setattr('matrix', value)
 
 	@property
 	def rowCount(self) -> int:
@@ -127,29 +127,30 @@ class SheetBase(SpreadsheetBase):
 			shape=(height, width),
 			dtype='object')
 		self.update_sheet(
-			values=empty_array,
+			matrix=empty_array,
 			x_offset=x_offset,
 			y_offset=y_offset)
 
 	def update_sheet(
 		self,
-		values: np.ndarray,
+		matrix: np.ndarray,
 		x_offset: int,
 		y_offset: int,
-	):
+	) -> bool:
 		packets = self.make_packets(
-			values=values,
+			matrix=matrix,
 			x_offset=x_offset,
 			y_offset=y_offset)
 		self.auto_dimension(
-			values=values,
+			matrix=matrix,
 			x_offset=x_offset,
 			y_offset=y_offset)
 		self.send_packets(packets)
 		self.apply_value_changes(
-			values=values,
+			matrix=matrix,
 			x_offset=x_offset,
 			y_offset=y_offset)
+		return True
 
 	def get_last_filled_y(
 		self,
@@ -177,17 +178,17 @@ class SheetBase(SpreadsheetBase):
 
 	def apply_value_changes(
 		self,
-		values: np.ndarray,
+		matrix: np.ndarray,
 		x_offset: int,
 		y_offset: int,
 	) -> None:
 		self.extend_array(
-			attach=values,
+			attach=matrix,
 			x_offset=x_offset,
 			y_offset=y_offset)
-		ver_ext = slice(y_offset, y_offset+values.shape[0])
-		hor_ext = slice(x_offset, x_offset+values.shape[1])
-		self.values[ver_ext, hor_ext] = values
+		ver_ext = slice(y_offset, y_offset+matrix.shape[0])
+		hor_ext = slice(x_offset, x_offset+matrix.shape[1])
+		self.matrix[ver_ext, hor_ext] = matrix
 
 	def extend_array(
 		self,
@@ -198,13 +199,13 @@ class SheetBase(SpreadsheetBase):
 		attach_height = y_offset + attach.shape[0]
 		attach_width = x_offset + attach.shape[1]
 
-		if attach_height > self.values.shape[0] or attach_width > self.values.shape[1]:
-			new_height = max(self.values.shape[0], attach_height)
-			new_width = max(self.values.shape[1], attach_width)
+		if attach_height > self.matrix.shape[0] or attach_width > self.matrix.shape[1]:
+			new_height = max(self.matrix.shape[0], attach_height)
+			new_width = max(self.matrix.shape[1], attach_width)
 			new_shape = (new_height, new_width)
-			new_base = np.empty(new_shape, dtype=self.values.dtype)
-			new_base[:self.values.shape[0], :self.values.shape[1]] = self.values
-			self.values = new_base
+			new_base = np.empty(new_shape, dtype=self.matrix.dtype)
+			new_base[:self.matrix.shape[0], :self.matrix.shape[1]] = self.matrix
+			self.matrix = new_base
 
 	def two_dimensionalize(
 		self,
@@ -225,14 +226,14 @@ class SheetBase(SpreadsheetBase):
 			data = self.two_dimensionalize(data=data)
 		return data
 
-	def get_values(self) -> np.ndarray:
+	def get_matrix(self) -> np.ndarray:
 		endpoint_items = self.endpoints['values']['get']
 		endpoint_items['endpoint'] = endpoint_items['endpoint'].format(
 			range=self.title)
 		result = self.request(**endpoint_items)
 		rowCount = self.getattr('rowCount')
 		columnCount = self.getattr('columnCount')
-		values = result.get(
+		matrix = result.get(
 			'values',
 			np.empty(
 				(rowCount, columnCount),
@@ -240,12 +241,12 @@ class SheetBase(SpreadsheetBase):
 			)
 		)
 
-		if type(values) == list:
-			values = rectanglize(values)
-			values = np.array(values, dtype='object')
-			values = np.where(values == '', None, values)
+		if type(matrix) == list:
+			matrix = rectanglize(matrix)
+			matrix = np.array(matrix, dtype='object')
+			matrix = np.where(matrix == '', None, matrix)
 
-		return values
+		return matrix
 
 	def send_packets(
 		self,
@@ -275,16 +276,16 @@ class SheetBase(SpreadsheetBase):
 
 	def make_packets(
 		self,
-		values: np.ndarray,
+		matrix: np.ndarray,
 		x_offset: int,
 		y_offset: int,
 	) -> list:
 		packets = []
 		start = 0
-		end = len(values)
+		end = len(matrix)
 
 		while start < end:
-			batch = values[start:end]
+			batch = matrix[start:end]
 			data_size = sys.getsizeof(batch) / (1024 * 1024)
 
 			if data_size > self.max_packet_size:
@@ -296,7 +297,7 @@ class SheetBase(SpreadsheetBase):
 					width=len(batch[0]),
 					height=len(batch)
 				)
-				data: list = jsonify_values(batch)
+				data: list = jsonify_matrix(batch)
 				packet = {
 					'range': rng,
 					'values': data
@@ -308,11 +309,11 @@ class SheetBase(SpreadsheetBase):
 
 	def auto_dimension(
 		self,
-		values: np.ndarray,
+		matrix: np.ndarray,
 		x_offset: int,
 		y_offset: int,
 	) -> None:
-		shape = values.shape
+		shape = matrix.shape
 		row_diff = int((shape[0] + y_offset) - self.rowCount)
 		col_diff =  int((shape[1] + x_offset) - self.columnCount)
 

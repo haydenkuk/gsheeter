@@ -4,7 +4,8 @@ from typing import Mapping
 from .property import classproperty
 from requests import Response, Session
 from .exceptions import (
-	NotFoundException
+	NotFoundException,
+	PermissionDeniedException
 )
 
 BASE_URLS = {
@@ -88,6 +89,8 @@ class GoogleAPI:
 
 				if status == 'NOT_FOUND':
 					raise NotFoundException()
+				elif status == 'PERMISSION_DENIED':
+					raise PermissionDeniedException()
 
 				time.sleep(wait_time)
 				wait_time *= (1+wait_time)

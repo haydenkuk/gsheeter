@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "gsheeter"
-version = "0.1.1"
+version = "0.1.2"
 authors = [{ name = "Yunjong Guk", email = "haydenkuk@gmail.com" }]
 maintainers = [{ name = "Yunjong Guk", email = "haydenkuk@gmail.com" }]
 readme = { file = "README.md", content-type = "text/markdown" }

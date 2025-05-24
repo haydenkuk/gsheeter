@@ -118,7 +118,8 @@ sheet = spreadsheet.add_sheet(
 )
 # after creating a new sheet named "new_sheet", with 10 rows and 10 columns
 ```
-![AddSheet]()
+![AddSheet](https://github.com/haydenkuk/gsheeter/tree/main/doc_imgs/add_sheet_1.png)
+![AddSheet](https://github.com/haydenkuk/gsheeter/tree/main/doc_imgs/add_sheet_2.png)
 
 6. Read sheet values: entire sheet
 ```python

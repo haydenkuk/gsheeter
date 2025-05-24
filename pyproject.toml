@@ -70,7 +70,7 @@ dynamic = ["description"]
 [project.urls]
 Source = "https://github.com/haydenkuk/gsheeter"
 Issues = "https://github.com/haydenkuk/gsheeter/issues"
-Documentation = "https://github.com/haydenkuk/gsheeter/README.md"
+Documentation = "https://github.com/haydenkuk/gsheeter/blob/main/README.md"
 
 [project.license]
 file = "LICENSE.txt"

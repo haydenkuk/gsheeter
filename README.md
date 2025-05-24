@@ -16,13 +16,13 @@ Features:
 - Auto-parse values on sheet to get tables with positions and pd.DataFrame interpretations
 - Multi-level indexes and columns supported
 
-## Installation
+## 1. Installation
 ```sh
 pip install gsheeter
 ```
 Requires Python 3.9+.
 
-## Basic Usage
+## 2. Basic Usage
 
 1. Authentication
 (Only service account usage is allowed so far, I will develop functions to use other auth methods in the future)
@@ -113,11 +113,12 @@ sheet = spreadsheet.add_sheet(sheetname)
 # create a smaller sheet with 100 rows and 10 columns
 sheet = spreadsheet.add_sheet(
   sheetname=sheetname,
-  rowCount=100,
+  rowCount=10,
   columnCount=10,
 )
-
+# after creating a new sheet named "new_sheet", with 10 rows and 10 columns
 ```
+![AddSheet]()
 
 6. Read sheet values: entire sheet
 ```python
@@ -248,6 +249,7 @@ sheet.delete_table(1) # you can also use table index
 
 
 ## Advanced Usage and Object structures
+
 1. Drive
 2. Spreadsheet
 3. Sheet

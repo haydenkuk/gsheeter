@@ -116,6 +116,9 @@ class SheetBase(SpreadsheetBase):
 	def columnCount(self) -> int:
 		return self.getattr('columnCount')
 
+	def format(self):
+		pass
+
 	def clear_range(
 		self,
 		x_offset: int,

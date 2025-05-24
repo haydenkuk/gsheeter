@@ -129,9 +129,12 @@ fileId = 'fileId'
 spreadsheet = Drive.get_spreadsheet(fileId)
 sheetname = 'Sheet1'
 sheet = spreadsheet.get_sheet(sheetname)
-values = sheet.values # returns 2D np.ndarray filled with Values.
+values = sheet.matrix # returns 2D np.ndarray filled with Values.
 # If the sheet is empty, An empty np.ndarray with size of (sheet.rowCount, sheet.columnCount)
 ```
+![Screenshot](doc_imgs/matrix_1.png)
+![Screenshot](doc_imgs/matrix_2.png)
+
 7. Read sheet values: tables
 ```python
 from gsheeter import Drive
@@ -145,6 +148,10 @@ tables = sheet.tables
 for t in tables:
   print(t)
 ```
+
+![Screenshot](doc_imgs/table_ex_1.png)
+![Screenshot](doc_imgs/table_ex_2.png)
+
 8. Read sheet values: a table
 ```python
 from gsheeter import Drive
@@ -153,9 +160,10 @@ fileId = 'fileId'
 spreadsheet = Drive.get_spreadsheet(fileId)
 sheetname = 'Sheet1'
 sheet = spreadsheet.get_sheet(sheetname)
-table = sheet.tables
+table = sheet.table # by default, the first table(table #1) is assigned to sheet.table
 ```
-6. Update values: using sheet
+
+9. Update values: using sheet
 ```python
 from gsheeter import Drive
 
@@ -163,7 +171,8 @@ fileId = 'fileId'
 spreadsheet = Drive.get_spreadsheet(fileId)
 sheetname = 'Sheet1'
 sheet = spreadsheet.get_sheet(sheetname)
-
+```
+```python
 import numpy as np
 
 # all coordinates follow array indexing convention, starting from 0
@@ -176,7 +185,10 @@ sheet.set_values(
   data=arr,
   y_offset=y_offset,
   x_offset=x_offset)
+```
+![Screenshot](doc_imgs/update_values_1.png)
 
+```python
 # 2. set values of 1D np.ndarray with x and y coordinate on sheet
 arr = np.array([0,1,2,3,4])
 y_offset = 1 # row 2
@@ -185,7 +197,10 @@ sheet.set_values(
   data=arr,
   y_offset=y_offset,
   x_offset=x_offset)
+```
+![Screenshot](doc_imgs/update_values_2.png)
 
+```python
 # 3. set values of pd.DataFrame with x and y coordinate on sheet
 df = pd.DataFrame(...)
 y_offset = 0
@@ -194,13 +209,18 @@ sheet.set_values(
   data=df,
   y_offset=y_offset,
   x_offset=x_offset)
+```
 
+```python
 # 4. set values of pd.Series
 row = pd.Series(...)
 # default values of y_offset and x_offset are 0
 # if the input to .set_values() is of type pd.Series, the output value is transposed.
 sheet.set_values(row)
+```
+![Screenshot](doc_imgs/update_values_3.png)
 
+```python
 # 5. append values at the next row after the last non-empty row
 # x_offset determines the index at which the search for non-empty row starts
 arr = np.zeros(shape=(4, 3))
@@ -209,8 +229,22 @@ sheet.set_values(
   x_offset=1, # searches for the next empty row after the last non-empty row starting from x coordinate of 1 to x coordinate of 1 + width of input data
   append=True)
 ```
+![Screenshot](doc_imgs/update_values_4.png)
+![Screenshot](doc_imgs/update_values_5.png)
 
-8. Update values: replace values in a row of a table
+```python
+arr = np.zeros(shape=(4, 3))
+sheet.set_values(
+  data=arr,
+  x_offset=1,
+  y_offset=1, # paste the input data 1 index array along y-axis from the last-fill row
+  append=True
+)
+```
+![Screenshot](doc_imgs/update_values_4.png)
+![Screenshot](doc_imgs/update_values_6.png)
+
+10. Update values: replace values in a row of a table
 ```python
 from gsheeter import Drive
 
@@ -223,7 +257,7 @@ row['x'] = 'test'
 row['y'] = 'test'
 table.update_row(row) # then update the values of the row
 ```
-9. Update values: delete a row of a table
+11. Update values: delete a row of a table
 ```python
 from gsheeter import Drive
 
@@ -236,7 +270,7 @@ table = sheet.table
 row = table.df.iloc[1]
 table.delete_row(row)
 ```
-10. Update values: delete a table
+12. Update values: delete a table
 ```python
 from gsheeter import Drive
 

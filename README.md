@@ -118,8 +118,8 @@ sheet = spreadsheet.add_sheet(
 )
 # after creating a new sheet named "new_sheet", with 10 rows and 10 columns
 ```
-![Screenshot](/doc_imgs/add_sheet_1.png)
-![Screenshot](oc_imgs/add_sheet_2.png)
+![Screenshot](doc_imgs/add_sheet_1.png)
+![Screenshot](doc_imgs/add_sheet_2.png)
 
 6. Read sheet values: entire sheet
 ```python

@@ -86,7 +86,10 @@ class Table(SheetBase):
 	@property
 	def df(self) -> pd.DataFrame:
 		if self._df is None:
-			self._df = ndarray_to_df(self.range_matrix)
+			if self.getattr('outer_height') == 0 and self.getattr('outer_width') == 0:
+				self._df = pd.DataFrame()
+			else:
+				self._df = ndarray_to_df(self.range_matrix)
 		return self._df
 
 	@df.setter
@@ -253,7 +256,7 @@ class Table(SheetBase):
 					data=data,
 					columns=self.df.columns)
 
-		self.df = pd.concat([self.df, appendee], axis=0)
+		self.df = pd.concat([self.df, appendee], axis=0) # type: ignore
 		self.set_dims()
 		return True
 
@@ -283,7 +286,7 @@ class Table(SheetBase):
 
 	def validate_shape(
 		self,
-		data: Union[pd.DataFrame, np.ndarray]
+		data: Union[pd.DataFrame, np.ndarray, pd.Series]
 	) -> bool:
 		if not isinstance(data, (pd.DataFrame, np.ndarray)):
 			raise Exception(
@@ -414,7 +417,7 @@ class SheetSquared:
 		cls,
 		anchor: tuple,
 		layers: ValueLayers
-	) -> Tuple[np.ndarray, ValueLayers]:
+	) -> Tuple[np.ndarray | None, ValueLayers]:
 		width = cls.get_width(anchor, layers)
 
 		if width < 1:

@@ -43,9 +43,13 @@ class Sheet(SheetBase):
     return self._tables
 
   @property
-  def table(self) -> Table | None:
+  def table(self) -> Table:
     if len(self.tables) == 0:
-      return None
+      return Table(
+        anchor=(0, 0),
+        outer_height=0,
+        outer_width=0,
+        parent=self)
     if self.t_idx >= len(self.tables):
       return self.tables[-1]
     return self.tables[self.t_idx]

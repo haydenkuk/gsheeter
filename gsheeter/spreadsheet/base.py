@@ -75,7 +75,7 @@ class SpreadsheetBase(Lego, GoogleAPI):
 		if len(requests) == 0:
 			return None
 
-		endpoint_items = self.endpoints[object]['batchUpdate']
+		endpoint_items = deepcopy(self.endpoints[object]['batchUpdate'])
 		endpoint_items['data']['requests'] = requests
 		result = self.request(**endpoint_items)
 		return result
@@ -230,7 +230,7 @@ class SheetBase(SpreadsheetBase):
 		return data
 
 	def get_matrix(self) -> np.ndarray:
-		endpoint_items = self.endpoints['values']['get']
+		endpoint_items = deepcopy(self.endpoints['values']['get'])
 		endpoint_items['endpoint'] = endpoint_items['endpoint'].format(
 			range=self.title)
 		result = self.request(**endpoint_items)
@@ -247,7 +247,10 @@ class SheetBase(SpreadsheetBase):
 		if type(matrix) == list:
 			matrix = rectanglize(matrix)
 			matrix = np.array(matrix, dtype='object')
-			matrix = np.where(matrix == '', None, matrix)
+			matrix = np.where(
+        matrix == '',
+        None, # type: ignore
+        matrix)
 
 		return matrix
 
@@ -255,7 +258,7 @@ class SheetBase(SpreadsheetBase):
 		self,
 		packets: list,
 	) -> None:
-		endpoint_items = self.endpoints['values']['batchUpdate']
+		endpoint_items = deepcopy(self.endpoints['values']['batchUpdate'])
 
 		for packet in packets:
 			endpoint_items['data'] = {

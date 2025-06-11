@@ -91,6 +91,8 @@ class GoogleAPI:
 					raise NotFoundException()
 				elif status == 'PERMISSION_DENIED':
 					raise PermissionDeniedException()
+				elif status == 'RATE_LIMIT_EXCEEDED':
+					print('RATE_LIMIT_EXCEEDED')
 
 				time.sleep(wait_time)
 				wait_time *= (1+wait_time)

@@ -13,6 +13,7 @@ from ..spreadsheet.sheets_endpoints import (
 from .drive_endpoints import (
 	DRIVE_ENDPOINTS
 )
+from copy import deepcopy
 
 class Drive(GoogleAPI):
 
@@ -25,7 +26,7 @@ class Drive(GoogleAPI):
 		supportsAllDrives: str = 'true',
 		includeItemsFromAllDrives: str = 'true',
 	) -> pd.DataFrame:
-		endpoint_items = DRIVE_ENDPOINTS['files']['list']
+		endpoint_items = deepcopy(DRIVE_ENDPOINTS['files']['list'])
 		endpoint_items['endpoint'] = cls.add_query(
 			endpoint=endpoint_items['endpoint'],
 			q=q,
@@ -72,7 +73,7 @@ class Drive(GoogleAPI):
 
 			file = File(**req_result.iloc[0].to_dict())
 		else:
-			endpoint_items = DRIVE_ENDPOINTS['files']['get']
+			endpoint_items = deepcopy(DRIVE_ENDPOINTS['files']['get'])
 			endpoint_items['endpoint'] = endpoint_items['endpoint'].format(fileId=target)
 			result = cls.request(**endpoint_items)
 			file = File(**result)
@@ -97,7 +98,7 @@ class Drive(GoogleAPI):
 		else:
 			spreadsheetId = target
 
-		endpoint_items = SHEETS_ENDPOINTS['spreadsheets']['get']
+		endpoint_items = deepcopy(SHEETS_ENDPOINTS['spreadsheets']['get'])
 		endpoint_items['endpoint'] = endpoint_items['endpoint'].format(
 			spreadsheetId=spreadsheetId)
 		spreadsheet = cls.request(**endpoint_items)
@@ -113,7 +114,7 @@ class Drive(GoogleAPI):
 		removeParents: str = 'root',
 		supportsAllDrives: str = 'true',
 	) -> dict:
-		payload = DRIVE_ENDPOINTS['files']['update']
+		payload = deepcopy(DRIVE_ENDPOINTS['files']['update'])
 		payload['endpoint'] = payload['endpoint'].format(
 			fileId=fileId
 		)
@@ -147,7 +148,7 @@ class Drive(GoogleAPI):
 				}
 			]
 		}
-		payload = SHEETS_ENDPOINTS['spreadsheets']['create']
+		payload = deepcopy(SHEETS_ENDPOINTS['spreadsheets']['create'])
 		payload['data'] = req
 		result = cls.request(**payload)
 		ss = Spreadsheet(**result)

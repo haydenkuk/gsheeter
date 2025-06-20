@@ -13,6 +13,6 @@ DIMENSIONS = {
 	}
 }
 
-FRAME_TYPES = (pd.DataFrame, pd.Series)
-ARRAY_TYPES = (np.ndarray, list, tuple)
-DATA_TYPES = Union[pd.DataFrame, pd.Series, np.ndarray, list, tuple]
+#FRAME_TYPES = (pd.DataFrame, pd.Series)
+#ARRAY_TYPES = (np.ndarray, list, tuple)
+#DATA_TYPES = Union[pd.DataFrame, pd.Series, np.ndarray, list, tuple]

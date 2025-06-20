@@ -3,10 +3,6 @@ from typing import Iterable, Union, Mapping
 from ..lego.api import GoogleAPI
 from .sheets_endpoints import SHEETS_ENDPOINTS
 import numpy as np, pandas as pd
-from .sheet_types import (
-	DATA_TYPES,
-	ARRAY_TYPES
-)
 from .sheets_enum import Dimension
 import sys
 from .sheet_utils import (
@@ -116,7 +112,10 @@ class SheetBase(SpreadsheetBase):
 	def columnCount(self) -> int:
 		return self.getattr('columnCount')
 
-	def format(self):
+	def format(
+		self,
+		
+	):
 		pass
 
 	def clear_range(
@@ -223,9 +222,9 @@ class SheetBase(SpreadsheetBase):
 
 	def convert_input(
 		self,
-		data: DATA_TYPES,
+		data: Union[pd.DataFrame, pd.Series, list, tuple, np.ndarray],
 	) -> Union[pd.DataFrame, np.ndarray, pd.Series]:
-		if isinstance(data, ARRAY_TYPES):
+		if isinstance(data, (list, tuple, np.ndarray)):
 			data = self.two_dimensionalize(data=data)
 		return data
 

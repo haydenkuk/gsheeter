@@ -9,8 +9,6 @@ from typing import (
 )
 from .sheet_types import (
 	DIMENSIONS,
-	DATA_TYPES,
-	ARRAY_TYPES
 )
 from copy import deepcopy
 from .sheet_utils import (
@@ -219,7 +217,7 @@ class Table(SheetBase):
 
 	def append(
 		self,
-		data: DATA_TYPES,
+		data: Union[pd.DataFrame, pd.Series, list, tuple, np.ndarray],
 	):
 		data = self.convert_input(data)
 		validated = self.validate_shape(data)
@@ -241,7 +239,7 @@ class Table(SheetBase):
 			new_outer_height)
 		appendee = data
 
-		if isinstance(data, ARRAY_TYPES):
+		if isinstance(data, (list, tuple, np.ndarray)):
 			if self.index_width > 0:
 				idx = make_frame_edges(
 					data[:, 0:self.index_width],
@@ -281,7 +279,7 @@ class Table(SheetBase):
 		if len(missing_cols) > 0:
 			data.loc[:, missing_cols] = None
 
-		data.columns = self.df.columns
+		data = data[self.df.columns.tolist()]
 		return data
 
 	def validate_shape(

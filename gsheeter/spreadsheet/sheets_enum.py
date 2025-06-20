@@ -7,7 +7,7 @@ class SheetEnum(Enum):
       for member in cls:
         if member.name.lower() == value.lower():
           return member
-    return super()._missing__(value)
+    return super()._missing__(value) # type: ignore
 
 class Dimension(SheetEnum):
   ROWS = 'ROWS'

@@ -10,11 +10,6 @@ from .sheet_objects import (
   Table, ValueLayers,
   SheetSquared
 )
-from .sheet_types import (
-  FRAME_TYPES,
-  ARRAY_TYPES,
-  DATA_TYPES,
-)
 from .sheet_utils import (
   get_value_layers,
   has_digit_index,
@@ -218,7 +213,7 @@ class Sheet(SheetBase):
 
   def set_values(
     self,
-    data: DATA_TYPES,
+    data: Union[pd.DataFrame, pd.Series, list, tuple, np.ndarray],
     x_offset: int = 0,
     y_offset: int = 0,
     append: bool = False,
@@ -248,7 +243,7 @@ class Sheet(SheetBase):
 
   def paste_data(
     self,
-    data: DATA_TYPES,
+    data: Union[pd.DataFrame, pd.Series, list, tuple, np.ndarray],
     x_offset: int,
     y_offset: int,
     append: bool,
@@ -274,7 +269,7 @@ class Sheet(SheetBase):
 
   def append_to_table(
     self,
-    data: DATA_TYPES,
+    data: Union[pd.DataFrame, pd.Series, list, tuple, np.ndarray],
     x_offset: int,
   ) -> bool:
     result = False

@@ -5,13 +5,8 @@ from ..environ.environ import (
 	TABLE_FILLER,
 	FLOAT_FORMAT,
 )
-from .sheet_types import (
-	DATA_TYPES,
-	ARRAY_TYPES,
-	FRAME_TYPES,
-)
 from ..lego import types
-from typing import Iterable
+from typing import Iterable, Union
 from pandas import RangeIndex
 
 
@@ -57,7 +52,8 @@ def jsonify_matrix(matrix: np.ndarray,) -> list:
 	output: np.ndarray = nan_formmater(output)
 	output: np.ndarray = datetime_formatter(output)
 	output: np.ndarray = numeric_formatter(output)
-	return output.tolist()
+	output_lst: list = list(output.tolist())
+	return output_lst
 
 def ndarray_to_df(matrix: np.ndarray) -> pd.DataFrame:
 	value_layers = get_value_layers(matrix)
@@ -123,7 +119,9 @@ def get_index_width(value_layers) -> int:
 
 	return index_width
 
-def has_digit_index(matrix: DATA_TYPES) -> bool:
+def has_digit_index(
+  matrix: Union[pd.DataFrame, pd.Series, list, tuple, np.ndarray]
+) -> bool:
 	if isinstance(matrix, pd.DataFrame):
 		if isinstance(matrix.index, RangeIndex):
 			return True
@@ -151,10 +149,10 @@ def make_frame_edges(
 	if output.shape[0] == 1:
 		return output[0]
 
-	return pd.MultiIndex.from_arrays(output)
+	return pd.MultiIndex.from_arrays(output) # type: ignore
 
 def to_ndarray(
-	data: DATA_TYPES,
+	data: Union[pd.DataFrame, pd.Series, list, tuple, np.ndarray],
 	keep_columns: bool,
 ) -> np.ndarray:
 	if not isinstance(data, pd.DataFrame):
@@ -233,16 +231,16 @@ def get_column_array(data:pd.DataFrame) -> np.ndarray:
 					column_array[j, i] = col
 	return column_array
 
-def width(data: DATA_TYPES) -> int:
-	if isinstance(data, ARRAY_TYPES):
+def width(data: Union[pd.DataFrame, pd.Series, list, tuple, np.ndarray]) -> int:
+	if isinstance(data, (list, tuple, np.ndarray)):
 		pass
-	elif isinstance(data, FRAME_TYPES):
+	elif isinstance(data, (pd.DataFrame, pd.Series)):
 		pass
 	raise Exception(f'INVALID DATA TYPE:{type(data)}')
 
-def height(data: DATA_TYPES) -> int:
-	if isinstance(data, ARRAY_TYPES):
+def height(data: Union[pd.DataFrame, pd.Series, list, tuple, np.ndarray]) -> int:
+	if isinstance(data, (list, tuple, np.ndarray)):
 		pass
-	elif isinstance(data, FRAME_TYPES):
+	elif isinstance(data, (pd.DataFrame, pd.Series)):
 		pass
 	raise Exception(f'INVALID DATA TYPE:{type(data)}')

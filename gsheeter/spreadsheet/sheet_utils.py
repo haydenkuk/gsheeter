@@ -7,7 +7,7 @@ from ..environ.environ import (
 )
 from ..lego import types
 from typing import Iterable, Union
-from pandas import RangeIndex
+from pandas import RangeIndex, Index
 
 
 def rectanglize(matrix: list) -> list:
@@ -125,6 +125,8 @@ def has_digit_index(
 	if isinstance(matrix, pd.DataFrame):
 		if isinstance(matrix.index, RangeIndex):
 			return True
+		elif isinstance(matrix.index, Index):
+			return all([types.DIGIT_REGEX.match(str(val)) for val in matrix.index])
 		else:
 			return False
 	return all([types.DIGIT_REGEX.match(str(val)) for val in matrix])

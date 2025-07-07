@@ -1,6 +1,5 @@
 from .base import SheetBase
 from ..lego.lego import Lego
-from ..lego.bamboo import Bamboo
 import numpy as np, pandas as pd
 from .sheets_enum import IndexType
 from typing import (
@@ -19,6 +18,7 @@ from .sheet_utils import (
 	to_ndarray,
 	make_frame_edges
 )
+from pandas import RangeIndex
 
 
 class Table(SheetBase):
@@ -300,11 +300,15 @@ class Table(SheetBase):
 
 				return True
 		elif isinstance(data, pd.DataFrame):
-			if self.index_width == data.bamboo.index_width:
-				if len(list(set(self.df.columns) & set(data.columns))) > 1:
-					return True
-
+			if len(self.df.index.shape) > 1 and len(data.index.shape) > 1:
+				if self.index_width != data.shape[-1]:
+					return False
+			return (
+				len(list(set(self.df.columns) & set(data.columns))) > 1 and
+				len(data.index.shape) == len(self.df.index.shape)
+			)
 		return False
+
 
 class ValueLayers(Lego):
 

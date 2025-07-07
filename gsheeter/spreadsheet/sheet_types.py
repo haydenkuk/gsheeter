@@ -12,7 +12,3 @@ DIMENSIONS = {
 		'index_width': np.nan,
 	}
 }
-
-#FRAME_TYPES = (pd.DataFrame, pd.Series)
-#ARRAY_TYPES = (np.ndarray, list, tuple)
-#DATA_TYPES = Union[pd.DataFrame, pd.Series, np.ndarray, list, tuple]

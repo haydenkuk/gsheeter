@@ -3,6 +3,9 @@ from dateparser import parse
 from . import types
 import re
 import datetime as dt
+import numpy as np
+import pandas as pd
+from typing import Any
 
 
 def nested_recursive_search(
@@ -58,9 +61,10 @@ def set_nested_value(d:dict, keys: str | list, new_value):
   if type(keys) == str:
     keys = [keys]
 
-  value_set = update_key(d, keys[-1], new_value)
+  update_key(d, keys[-1], new_value)
+  set_val = nested_recursive_search(d, keys[-1])
 
-  if not value_set:
+  if not are_equal(set_val, new_value):
     current = d
 
     for k in keys[:-1]:
@@ -76,8 +80,19 @@ def set_nested_value(d:dict, keys: str | list, new_value):
     current[keys[-1]] = new_value
 
 
+def are_equal(val1: Any, val2: Any) -> bool:
+  if type(val1) != type(val2):
+    return False
+
+  if (
+    isinstance(val1, (tuple, list, np.ndarray, pd.DataFrame)) and
+    isinstance(val2, (tuple, list, np.ndarray, pd.DataFrame))
+  ):
+    return np.array_equal(val1, val2)
+  return val1 == val2
+
+
 def update_key(d, target_key, new_value):
-  completed = False
   if isinstance(d, dict):
     for k, v in d.items():
       if k == target_key:
@@ -89,7 +104,6 @@ def update_key(d, target_key, new_value):
       elif isinstance(v, list):
         for item in v:
           update_key(item, target_key, new_value)
-  return completed
 
 
 def get_all_keys(d):
@@ -115,7 +129,7 @@ def is_datetime(value):
 	return isinstance(value, types.DATETIME_TYPES)
 
 
-def parse_date(input: str) -> dt.datetime:
+def parse_date(input: str) -> dt.datetime | None | str:
   if type(input) == str:
     pattern_match = re.match(
       r'^(?=\d{2,4}\D\d{2,4})[\d\-\/\:\s]{6,}$',
@@ -124,6 +138,7 @@ def parse_date(input: str) -> dt.datetime:
 
     if pattern_match is not None:
       return parse(input)
-  elif is_datetime(input):
+  elif isinstance(input, dt.datetime):
     return parse(input.strftime('%Y-%m-%d %H:%M:%S'))
+
   return input

@@ -12,7 +12,7 @@ DATETIME_TYPES = (
 	np.datetime64,
 )
 
-DATETIME_REGEX = re.compile(r'^\d{2,4}[\-\/]{0,1}\d{2,4}[\-\/]{0,1}\d{2,4}.*\d{0,2}\:{0,1}\d{0,2}\:{0,1}\d{0,2}$')
+DATETIME_REGEX = re.compile(r'^\d{2,4}[\-\/\.\s]{1,2}\d{2,4}[\-\/\.\s]{1,2}\d{2,4}.*\d{0,2}\:{0,1}\d{0,2}\:{0,1}\d{0,2}$')
 DIGIT_REGEX = re.compile(r'^\d+$')
 NUM_REGEX = re.compile(r'^-?[\d,]+\.{0,1}[\d]*$')
 PERC_REGEX = re.compile(r'^[\d\,]+\.{0,1}\d*\%{1}$')

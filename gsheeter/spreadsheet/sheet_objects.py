@@ -1,5 +1,8 @@
 from .base import SheetBase
 from ..lego.lego import Lego
+from ..environ.environ import (
+  AUTOTYPING,
+)
 import numpy as np, pandas as pd
 from .sheets_enum import IndexType
 from typing import (
@@ -16,7 +19,8 @@ from .sheet_utils import (
 	get_column_height,
 	get_value_layers,
 	to_ndarray,
-	make_frame_edges
+	make_frame_edges,
+	autotype_df,
 )
 from pandas import RangeIndex
 
@@ -28,6 +32,7 @@ class Table(SheetBase):
 		anchor: tuple,
 		outer_height: int,
 		outer_width: int,
+  
 		parent: SheetBase,
 		**kwargs,
 	):
@@ -84,10 +89,19 @@ class Table(SheetBase):
 	@property
 	def df(self) -> pd.DataFrame:
 		if self._df is None:
-			if self.getattr('outer_height') == 0 and self.getattr('outer_width') == 0:
+			if (
+        self.getattr('outer_height') == 0 and
+        self.getattr('outer_width') == 0
+      ):
 				self._df = pd.DataFrame()
 			else:
-				self._df = ndarray_to_df(self.range_matrix)
+				df = ndarray_to_df(self.range_matrix)
+
+				if AUTOTYPING:
+					self._df = autotype_df(df)
+				else:
+					self._df = df
+
 		return self._df
 
 	@df.setter
@@ -470,5 +484,10 @@ class SheetSquared:
 				width += val
 			else:
 				break
+
+		next_row = layers.bin_layer[anchor[0]+1, anchor[1]:]
+
+		if width < next_row.sum():
+			width = 0
 
 		return width

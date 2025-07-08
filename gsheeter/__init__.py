@@ -15,9 +15,11 @@ from .environ.environ import (
 	set_table_buffer,
 	set_table_filler,
 	set_float_format,
+	set_autotype,
 	TABLE_BUFFER,
 	TABLE_FILLER,
-	FLOAT_FORMAT
+	FLOAT_FORMAT,
+	AUTOTYPING,
 )
 from .spreadsheet.sheet_objects import SheetSquared, Table
 from .spreadsheet.spreadsheet import Spreadsheet
@@ -37,7 +39,9 @@ __all__ = (
 	'cache',
 	'set_cache_usage',
 	'set_float_format',
+	'set_autotype',
 	'TABLE_BUFFER',
 	'TABLE_FILLER',
 	'FLOAT_FORMAT',
+	'AUTOTYPING',
 )

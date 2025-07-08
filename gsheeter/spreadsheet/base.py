@@ -114,7 +114,6 @@ class SheetBase(SpreadsheetBase):
 
 	def format(
 		self,
-		
 	):
 		pass
 

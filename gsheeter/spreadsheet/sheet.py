@@ -12,12 +12,13 @@ from .sheet_objects import (
 )
 from .sheet_utils import (
   get_value_layers,
-  has_digit_index,
-  to_ndarray
+  to_ndarray,
+  autotype_df
 )
 from ..environ.environ import (
   TABLE_BUFFER,
   TABLE_FILLER,
+  AUTOTYPING,
 )
 
 
@@ -57,7 +58,11 @@ class Sheet(SheetBase):
       if self.table is None:
         self._df = pd.DataFrame()
       else:
-        self._df = self.table.df
+        if AUTOTYPING:
+          self._df = autotype_df(self.table.df)
+        else:
+          self._df = self.table.df
+
     return self._df
 
   @df.setter

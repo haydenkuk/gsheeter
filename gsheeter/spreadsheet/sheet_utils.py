@@ -5,7 +5,12 @@ from ..environ.environ import (
 	TABLE_FILLER,
 	FLOAT_FORMAT,
 )
-from ..lego import types
+from ..lego.types import (
+  DATETIME_REGEX,
+  DIGIT_REGEX,
+  NUM_REGEX,
+  PERC_REGEX
+)
 from typing import Iterable, Union
 from pandas import RangeIndex, Index
 
@@ -20,6 +25,7 @@ def rectanglize(matrix: list) -> list:
 			matrix[i].append(None)
 
 	return matrix
+
 
 def jsonify_matrix(matrix: np.ndarray,) -> list:
 	output: np.ndarray= matrix.copy()
@@ -55,6 +61,7 @@ def jsonify_matrix(matrix: np.ndarray,) -> list:
 	output_lst: list = list(output.tolist())
 	return output_lst
 
+
 def ndarray_to_df(matrix: np.ndarray) -> pd.DataFrame:
 	value_layers = get_value_layers(matrix)
 	column_height = get_column_height(value_layers)
@@ -79,9 +86,11 @@ def ndarray_to_df(matrix: np.ndarray) -> pd.DataFrame:
 	df = pd.DataFrame(**frame_args)
 	return df
 
+
 def get_value_layers(matrix: np.ndarray):
 	from .sheet_objects import ValueLayers
 	return ValueLayers(matrix=matrix)
+
 
 def get_column_height(value_layers) -> int:
 	column_height = 1
@@ -101,6 +110,7 @@ def get_column_height(value_layers) -> int:
 
 	return column_height
 
+
 def get_index_width(value_layers) -> int:
 	if has_digit_index(value_layers.matrix[:, 0]):
 		return 0
@@ -119,6 +129,7 @@ def get_index_width(value_layers) -> int:
 
 	return index_width
 
+
 def has_digit_index(
   matrix: Union[pd.DataFrame, pd.Series, list, tuple, np.ndarray]
 ) -> bool:
@@ -126,10 +137,11 @@ def has_digit_index(
 		if isinstance(matrix.index, RangeIndex):
 			return True
 		elif isinstance(matrix.index, Index):
-			return all([types.DIGIT_REGEX.match(str(val)) for val in matrix.index])
+			return all([DIGIT_REGEX.match(str(val)) for val in matrix.index])
 		else:
 			return False
-	return all([types.DIGIT_REGEX.match(str(val)) for val in matrix])
+	return all([DIGIT_REGEX.match(str(val)) for val in matrix])
+
 
 def make_frame_edges(
 	edges: np.ndarray,
@@ -152,6 +164,7 @@ def make_frame_edges(
 		return output[0]
 
 	return pd.MultiIndex.from_arrays(output) # type: ignore
+
 
 def to_ndarray(
 	data: Union[pd.DataFrame, pd.Series, list, tuple, np.ndarray],
@@ -176,6 +189,7 @@ def to_ndarray(
 
 	return matrix
 
+
 def get_column_char(column_index: int) -> str:
 	alph = ''
 	while column_index > -1:
@@ -183,6 +197,7 @@ def get_column_char(column_index: int) -> str:
 		alph = chr(65 + remainder) + alph
 		column_index -= 1
 	return alph
+
 
 def get_index_array(data:pd.DataFrame) -> np.ndarray:
 	indexes = data.index
@@ -213,6 +228,7 @@ def get_index_array(data:pd.DataFrame) -> np.ndarray:
 		axis=0)
 	return index_array
 
+
 def get_column_array(data:pd.DataFrame) -> np.ndarray:
 	columns = data.columns
 	col_height = columns.nlevels
@@ -233,12 +249,36 @@ def get_column_array(data:pd.DataFrame) -> np.ndarray:
 					column_array[j, i] = col
 	return column_array
 
+
+def autotype_df(
+  df: pd.DataFrame
+) -> pd.DataFrame:
+  for col in df.columns:
+    colvals = df[col]
+    vals = colvals[pd.notna(colvals)]
+
+    if len(vals) == 0:
+      continue
+
+    if all([NUM_REGEX.match(str(val)) for val in vals]):
+      df[col] = pd.to_numeric(df[col])
+    elif all([DATETIME_REGEX.match(str(val)) for val in vals]):
+      df[col] = pd.to_datetime(df[col], format='mixed')
+    elif all([PERC_REGEX.match(str(val)) for val in vals]):
+      df[col] = df[col].str.replace('%', '').str.strip()
+      df[col] = df[col].str.replace(',', '')
+      df[col] = pd.to_numeric(df[col])
+      df[col] = df[col] / 100
+
+  return df
+
 def width(data: Union[pd.DataFrame, pd.Series, list, tuple, np.ndarray]) -> int:
 	if isinstance(data, (list, tuple, np.ndarray)):
 		pass
 	elif isinstance(data, (pd.DataFrame, pd.Series)):
 		pass
 	raise Exception(f'INVALID DATA TYPE:{type(data)}')
+
 
 def height(data: Union[pd.DataFrame, pd.Series, list, tuple, np.ndarray]) -> int:
 	if isinstance(data, (list, tuple, np.ndarray)):

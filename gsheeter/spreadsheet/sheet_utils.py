@@ -254,20 +254,18 @@ def autotype_df(
   df: pd.DataFrame
 ) -> pd.DataFrame:
   for col in df.columns:
-    colvals = df[col]
-    vals = colvals[pd.notna(colvals)]
+    vals = df[col][pd.notna(df[col])]
 
     if len(vals) == 0:
       continue
 
     if all([NUM_REGEX.match(str(val)) for val in vals]):
-      df[col] = pd.to_numeric(df[col])
+      df.loc[df[col].notna(),col] = pd.to_numeric(vals.astype(str).str.replace(',', '').str.strip())
     elif all([DATETIME_REGEX.match(str(val)) for val in vals]):
-      df[col] = pd.to_datetime(df[col], format='mixed')
+      df.loc[df[col].notna(), col] = pd.to_datetime(vals, format='mixed')
     elif all([PERC_REGEX.match(str(val)) for val in vals]):
-      df[col] = df[col].str.replace('%', '').str.strip()
-      df[col] = df[col].str.replace(',', '')
-      df[col] = pd.to_numeric(df[col])
+      df.loc[df[col].notna(), col] = vals.str.replace('%', '').str.replace(',' ,'').str.strip()
+      df.loc[df[col].notna(), col] = pd.to_numeric(df.loc[df[col].notna(), col])
       df[col] = df[col] / 100
 
   return df

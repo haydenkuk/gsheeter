@@ -165,7 +165,7 @@ class Table(SheetBase):
 	def __iter__(self) -> Generator[tuple[Hashable, pd.Series], None, None]:
 		yield from self.df.iterrows()
 
-	def sheetupdate(self):
+	def update_all(self):
 		new_matrix = to_ndarray(self.df, keep_columns=True)
 		self.update_sheet(
 			matrix=new_matrix,

@@ -87,10 +87,10 @@ class Drive(GoogleAPI):
 		target: str,
 		folderId: str | None = None
 	) -> Spreadsheet:
-		spreadsheet: Spreadsheet = cache.get_item(target)
+		#spreadsheet: Spreadsheet = cache.get_item(target)
 
-		if spreadsheet is not None:
-			return spreadsheet
+		#if spreadsheet is not None:
+		#	return spreadsheet
 
 		if folderId is not None:
 			file = cls.get_file(target=target, folderId=folderId)
@@ -103,7 +103,7 @@ class Drive(GoogleAPI):
 			spreadsheetId=spreadsheetId)
 		spreadsheet = cls.request(**endpoint_items)
 		spreadsheet = Spreadsheet(**spreadsheet)
-		cache.set_item(spreadsheet)
+		#cache.set_item(spreadsheet)
 		return spreadsheet
 
 	@classmethod

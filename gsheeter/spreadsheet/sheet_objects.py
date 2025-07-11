@@ -22,7 +22,6 @@ from .sheet_utils import (
 	make_frame_edges,
 	autotype_df,
 )
-from pandas import RangeIndex
 
 
 class Table(SheetBase):
@@ -166,7 +165,9 @@ class Table(SheetBase):
 		yield from self.df.iterrows()
 
 	def update_all(self):
-		new_matrix = to_ndarray(self.df, keep_columns=True)
+		new_matrix = to_ndarray(
+    self.df,
+    keep_columns=True)
 		self.update_sheet(
 			matrix=new_matrix,
 			x_offset=self.x_anchor,

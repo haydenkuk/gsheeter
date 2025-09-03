@@ -1,8 +1,8 @@
 from google.auth.credentials import Credentials
-from requests import Session, Response
+from requests import Session
 from google.auth.transport.requests import AuthorizedSession
 from typing import (
-	Iterable, Mapping, Any, Union, Optional
+	Mapping, Any, Union
 )
 from pathlib import Path
 from .client_utils import convert_credentials

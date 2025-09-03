@@ -1,6 +1,6 @@
 """ Google spreadsheet Python API Abstractor integrated with pandas"""
 
-__version__ = '0.1.3'
+__version__ = '0.2.9'
 __author__ = 'Yunjong Guk'
 
 from .auth.auth import (

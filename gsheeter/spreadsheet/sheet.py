@@ -1,7 +1,11 @@
-from .base import SheetBase
-import pandas as pd, numpy as np
+import pandas as pd
+import numpy as np
+import datetime as dt
+import sys
+
+
 from pandas import RangeIndex
-import datetime as dt, sys
+from .base import SheetBase
 from .sheets_enum import Dimension
 from typing import (
   Union, Iterable, Generator, List
@@ -20,6 +24,10 @@ from ..environ.environ import (
   TABLE_FILLER,
   AUTOTYPING,
 )
+from icecream import ic
+
+
+ic.configureOutput(includeContext=True)
 
 
 class Sheet(SheetBase):
@@ -278,11 +286,24 @@ class Sheet(SheetBase):
     x_offset: int,
   ) -> bool:
     result = False
-
+    
     for table in self.tables:
-      table: Table = table
-
-      if x_offset == table.x_anchor:
+      if x_offset != table.x_anchor:
+        continue
+      
+      x_anchor = table.x_anchor
+      y_anchor = table.y_anchor
+      outer_width = table.outer_width
+      overlap = False
+      
+      for i in range(y_anchor, len(self.matrix)):
+        row = self.matrix[i, x_anchor:x_anchor+outer_width]
+        
+        if len(row[pd.notna(row)]) > 0:
+          overlap = True
+          break
+        
+      if not overlap:
         result = table.append(data)
 
       if result:

@@ -1,10 +1,12 @@
+import numpy as np, pandas as pd
+import sys
+
+
 from ..lego.lego import Lego
 from typing import Iterable, Union, Mapping
 from ..lego.api import GoogleAPI
 from .sheets_endpoints import SHEETS_ENDPOINTS
-import numpy as np, pandas as pd
 from .sheets_enum import Dimension
-import sys
 from .sheet_utils import (
 	get_column_char,
 	jsonify_matrix,
@@ -12,7 +14,12 @@ from .sheet_utils import (
 	get_value_layers,
 )
 from copy import deepcopy
+from icecream import ic
+
+
+ic.configureOutput(includeContext=True)
 ENDPOINT_FORMATTERS = ['spreadsheetId', 'sheetId']
+
 
 class SpreadsheetBase(Lego, GoogleAPI):
 
@@ -159,7 +166,7 @@ class SheetBase(SpreadsheetBase):
 		x_offset: int,
 		width: int,
 	) -> int:
-		y_coord = 0
+		y_coord = -1
 		layers = get_value_layers(matrix)
 
 		for i in range(x_offset, x_offset+width):
@@ -259,7 +266,7 @@ class SheetBase(SpreadsheetBase):
 		endpoint_items = deepcopy(self.endpoints['values']['batchUpdate'])
 
 		for packet in packets:
-			endpoint_items['data'] = {
+			endpoint_items['json'] = {
 				'valueInputOption': 'USER_ENTERED',
 				'data': packet
 			}
@@ -276,7 +283,9 @@ class SheetBase(SpreadsheetBase):
 		end_col = get_column_char(x_offset + width - 1)
 		start_row = y_offset + 1
 		end_row = y_offset + height
-		return f'{self.title}!{start_col}{start_row}:{end_col}{end_row}'
+		start_rng = f'{start_col}{start_row}'
+		end_rng = f'{end_col}{end_row}'
+		return f'{self.title}!{start_rng}:{end_rng}'
 
 	def make_packets(
 		self,

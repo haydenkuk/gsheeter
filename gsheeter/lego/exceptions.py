@@ -3,5 +3,5 @@ class NotFoundException(Exception):
 
 class PermissionDeniedException(Exception):
 	'''Permission denied to access the entity'''
-  
+
 

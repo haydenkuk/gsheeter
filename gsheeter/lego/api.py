@@ -61,8 +61,9 @@ class GoogleAPI:
 		cls,
 		method: str,
 		endpoint: str,
-		data: dict | None = None,
+		json: dict | None = None,
 		headers: dict | None = None,
+		data: str | None = None,
 		**kwargs
 	):
 		base_url = cls.base_url(endpoint=endpoint)
@@ -79,8 +80,9 @@ class GoogleAPI:
 			res: Response = session.request(
 				method=method,
 				url=url,
-				json=data,
-				headers=headers
+				json=json,
+				headers=headers,
+				data=data,
 			)
 			result:dict = res.json()
 
@@ -92,7 +94,9 @@ class GoogleAPI:
 				elif status == 'PERMISSION_DENIED':
 					raise PermissionDeniedException()
 				elif status == 'RATE_LIMIT_EXCEEDED':
-					print('RATE_LIMIT_EXCEEDED')
+					print('RATE_LIMIT_EXCEEDED WAITING...')
+				else:
+					raise Exception(error, json, data)
 
 				time.sleep(wait_time)
 				wait_time *= (1+wait_time)

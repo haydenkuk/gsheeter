@@ -4,7 +4,8 @@ SHEETS_ENDPOINTS: dict = {
 		'batchUpdate': {
 			'method': 'post',
 			'endpoint': '/v4/spreadsheets/{spreadsheetId}:batchUpdate',
-			'data': {}
+			'data': {},
+			'json': {},
 		},
 		'create': {
 			'method': 'post',

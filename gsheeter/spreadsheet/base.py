@@ -79,7 +79,7 @@ class SpreadsheetBase(Lego, GoogleAPI):
 			return None
 
 		endpoint_items = deepcopy(self.endpoints[object]['batchUpdate'])
-		endpoint_items['data']['requests'] = requests
+		endpoint_items['json']['requests'] = requests
 		result = self.request(**endpoint_items)
 		return result
 
